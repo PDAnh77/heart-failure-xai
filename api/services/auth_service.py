@@ -9,7 +9,7 @@ from pwdlib import PasswordHash
 from core.config import settings
 
 algorithm = "HS256"
-secret = settings.SECRET_KEY
+secret = settings.JWT_SECRET_KEY
 password_hash = PasswordHash.recommended()
 security_scheme = HTTPBearer()
 

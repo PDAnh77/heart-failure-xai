@@ -45,7 +45,7 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-app.add_middleware(SessionMiddleware, secret_key=settings.SECRET_KEY, session_cookie="oauth_state_session")
+app.add_middleware(SessionMiddleware, secret_key=settings.JWT_SECRET_KEY, session_cookie="oauth_state_session")
 
 app.include_router(auth_router.router, prefix="/api/auth", tags=["Auth"])
 app.include_router(user_router.router, prefix="/api/users", tags=["User"])

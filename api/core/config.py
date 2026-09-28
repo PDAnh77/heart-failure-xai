@@ -5,7 +5,7 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     SUPABASE_URL: str
     SUPABASE_SERVICE_ROLE_KEY: str
-    SECRET_KEY: str
+    JWT_SECRET_KEY: str
     GOOGLE_CLIENT_ID: str
     GOOGLE_CLIENT_SECRET: str
     REDIRECT_URI: str

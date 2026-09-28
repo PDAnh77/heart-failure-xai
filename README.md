@@ -152,7 +152,7 @@ The frontend has its own installation guide. Please refer to the [web/README.md]
 * Backend requires certain environment variables to be set for proper operation. Create a `.env` file in the `api/` directory with the following variables:
    ```
    DATABASE_URL=your_database_url
-   SECRET_KEY=your_secret_key
+   JWT_SECRET_KEY=your_secret_key
    API_URL=http://localhost:8000
    CLIENT_URL=http://localhost:3000
    SUPABASE_URL=your_supabase_project_url
