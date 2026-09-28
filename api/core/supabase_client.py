@@ -1,4 +1,11 @@
-from supabase import create_client, Client
-from core.config import settings
+from core.storage import storage
 
-supabase: Client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+
+class SupabaseClientWrapper:
+    """Wrapper tương thích ngược để hỗ trợ cả Supabase Storage lẫn Local File Storage."""
+
+    def __init__(self):
+        self.storage = storage
+
+
+supabase = SupabaseClientWrapper()
