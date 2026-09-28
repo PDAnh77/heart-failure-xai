@@ -136,7 +136,7 @@ cd Heart-Failure-Prediction-with-XAI
    
 4. Run the API locally:
    ```bash
-   uvicorn app.main:app --reload
+   uvicorn main:app --reload
    ```
 
 Or build and run the Docker container:
