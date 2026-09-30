@@ -41,6 +41,7 @@ def store_refresh_token(db: Session, request: Request, user_id: str, refresh_tok
         insert(RefreshToken).values(
             user_id=user_id,
             token_hash=hash_token(refresh_token),
+            revoked=False,
             expires_at=(datetime.now(timezone.utc) + timedelta(days=REFRESH_TOKEN_TTL_DAYS)).isoformat(),
             ip_address=ip_address,
             user_agent=user_agent,

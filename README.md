@@ -13,33 +13,31 @@ A comprehensive AI-powered platform for heart failure analysis and risk predicti
 * CI/CD pipelines for automated build and deployment
 
 ## Features
-* Heart failure risk prediction based on patient clinical data using trained AI models
+* **Heart Failure Risk Prediction**: Infer cardiovascular risk probability based on patient clinical features using trained ML models.
 
-* Explainable AI (XAI) to interpret model outputs (e.g. feature importance, SHAP values)
+* **Explainable AI (XAI)**: Transparent, interpretable model predictions via SHAP (SHapley Additive exPlanations) and LIME (Local Interpretable Model-agnostic Explanations).
 
-* Dataset management with CSV upload, preprocessing, and storage
+* **Dataset Management**: Upload CSV datasets, view summaries, run automated preprocessing, and manage training/batch prediction files.
 
-* Exploratory Data Analysis (EDA) with statistical visualizations:
+* **Exploratory Data Analysis (EDA)**:
   - Correlation heatmaps and feature importance analysis
   - Target distribution analysis (pie charts and bar plots)
   - Chi-square scores for categorical features
   - ANOVA scores for numerical features
 
-* Automated data preprocessing:
+* **Automated Data Preprocessing**:
   - Duplicate removal
   - Missing value imputation
   - Label encoding for categorical variables
   - Feature scaling
 
-* Feature selection for optimal model performance
+* **Feature Selection**: Select optimal features using algorithms like Random Forest, XGBoost, and Decision Trees.
 
-* Store user prediction history with timestamps and input data for future reference
+* **Patient & Prediction History**: Manage patient clinical profiles and track individual and batch prediction history over time.
 
-* Web-based frontend for data input and result visualization
+* **Web-based Frontend**: Interactive, responsive UI for clinical data input and result visualization.
 
-* CI/CD pipelines for backend and frontend deployment
-
-* Dockerized backend for portability and scalability
+* **Dockerized Backend & CI/CD**: Ready for containerized deployment with automated build and deployment pipelines.
 
 ## Model & XAI Description
 * Model: Logistic Regression, Random Forest, XGBoost,...
@@ -64,7 +62,6 @@ A comprehensive AI-powered platform for heart failure analysis and risk predicti
 
 * XAI:
   - SHAP (SHapley Additive exPlanations)
-
   - LIME (Local Interpretable Model-agnostic Explanations)
 
 ## System Architecture
@@ -80,110 +77,138 @@ The repository is organized as follows:
 │   └── workflows/          # CI/CD pipelines for backend & frontend deployment
 │
 ├── api/                    # Backend API (FastAPI)
-│   ├── core/               # Core configuration, security, settings
-│   ├── db/                 # Database configuration and session management
+│   ├── core/               # Configuration, security, unified storage adapter
+│   ├── db/                 # Database connection & auto-initialization
 │   ├── models/             # SQLAlchemy ORM models
-│   ├── routers/            # API route definitions endpoints
+│   ├── routers/            # API route definitions & endpoints
 │   ├── schemas/            # Pydantic request/response schemas
 │   ├── services/           # Business logic (prediction, XAI, auth, dataset analysis)
-│   ├── dependencies.py     # Shared FastAPI dependencies (database session)
-│   ├── main.py             # FastAPI application entry point
+│   ├── storage/            # Local file storage root (ignored by git)
+│   ├── dependencies.py     # Shared FastAPI dependencies
+│   ├── main.py             # FastAPI application entry point & static file mount
 │   ├── Dockerfile          # Docker image build configuration
 │   └── requirements.txt    # Backend dependencies
 │
 ├── input/                  # Datasets used for training AI models
 │
 ├── notebooks/              # Jupyter notebooks for data analysis & model training
+│   └── models/             # Pretrained model files
 │
-├── web/                    # Frontend web application (Next.js)
-│   ├── app/                # App Router pages and layouts
+├── web/                    # Frontend web application
+│   ├── app/                # Application pages and layouts
 │   ├── components/         # Reusable UI components
-│   ├── context/            # React context (auth, global state)
+│   ├── context/            # Application context (auth, global state)
 │   ├── lib/                # API clients and helper functions
 │   ├── types/              # TypeScript type definitions
 │   ├── public/             # Static assets
 │   ├── README.md           # Frontend-specific setup instructions
 │   ├── package.json        # Frontend dependencies
-│   └── next.config.ts      # Next.js configuration
+│   └── next.config.ts      # Web application configuration
 │
 ├── requirements-dev.txt    # Development dependencies
 └── README.md               # Project documentation
 ```
 
+## Prerequisites
+* **Python**: `3.13` (Recommend)
+* **PostgreSQL**: `14+` (or Docker)
+* **Node.js**: `20.9.0+`
+
 ## Installation & Setup
-Clone the repository:
+
+If running PostgreSQL locally with Docker, start the database with:
 ```bash
-git clone https://github.com/PDAnh77/Heart-Failure-Prediction-with-XAI.git
-cd Heart-Failure-Prediction-with-XAI
+docker compose up -d
 ```
 
 ### Backend (API)
-1. Navigate to the api/ directory:
+1. Navigate to the `api/` directory:
    ```bash
    cd api/
    ```
 
-2. Create and activate a virtual environment (optional but recommended):
+2. Create and activate a virtual environment using Python 3.13:
    ```bash
    python -m venv venv
-   source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+   # On Windows (PowerShell):
+   venv\Scripts\Activate.ps1
+   # On Linux/macOS:
+   source venv/bin/activate
    ```
 
-3. Install the required dependencies:
+3. Install dependencies:
    ```bash
    pip install -r requirements.txt
    ```
-   
-4. Run the API locally:
+
+4. Configure environment variables (see [Environment Variables](#environment-variables) below).
+
+5. Run the API locally:
    ```bash
    uvicorn main:app --reload
    ```
+   The API will automatically:
+   - Connect to the configured database and create tables if they do not exist.
+   - Load the AI model from local file or storage.
+   - Serve Swagger interactive API documentation (e.g., `http://localhost:8000/docs`).
 
-Or build and run the Docker container:
+Or build and run via Docker:
    ```bash
    docker build -t heart-failure-api .
    docker run -d -p 8000:8000 heart-failure-api
    ```
-   
+
 ### Frontend (Web Application)
-The frontend has its own installation guide. Please refer to the [web/README.md](web/README.md) for detailed instructions on setting up and running the frontend application.
+Please refer to [web/README.md](web/README.md) for detailed instructions on setting up and running the frontend application.
 
-### Environment Variables
-* Backend requires certain environment variables to be set for proper operation. Create a `.env` file in the `api/` directory with the following variables:
-   ```
-   DATABASE_URL=your_database_url
-   JWT_SECRET_KEY=your_secret_key
-   API_URL=http://localhost:8000
-   CLIENT_URL=http://localhost:3000
-   SUPABASE_URL=your_supabase_project_url
-   SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
-   ```
+```bash
+cd web/
+npm install
+npm run dev
+```
 
-* If using Google OAuth for authentication, add these variables as well to the `.env` file:
-   ```
-   GOOGLE_CLIENT_ID=your_google_client_id
-   GOOGLE_CLIENT_SECRET=your_google_client_secret
-   REDIRECT_URL=http://localhost:3000/auth/callback
-   ```
+---
 
-* For frontend environment variables, please refer to the [web/README.md](web/README.md).
+## Environment Variables
+
+Create a `.env` file inside the `api/` directory:
+
+```env
+# Database: Local PostgreSQL or Supabase connection string
+DATABASE_URL=postgresql://your_username:your_password@localhost:5432/your_database_name
+
+# Storage: 'local' (saves files in api/storage/) or 'supabase'
+STORAGE_TYPE=local
+
+# Supabase Credentials (only required if STORAGE_TYPE=supabase)
+SUPABASE_URL=
+SUPABASE_SERVICE_ROLE_KEY=
+
+# Authentication & URLs (examples for local development)
+JWT_SECRET_KEY=your_secret_jwt_key
+API_URL=http://localhost:8000
+CLIENT_URL=http://localhost:3000
+FEATURE_SELECTION_MODEL=random_forest
+
+# Google OAuth (Optional)
+GOOGLE_CLIENT_ID=
+GOOGLE_CLIENT_SECRET=
+REDIRECT_URI=http://localhost:8000/api/auth/google/callback
+```
+
+---
 
 ### CI/CD Pipeline
-CI/CD workflows are located in the `.github/workflows/` directory.
+CI/CD workflows are located in the `.github/workflows/` directory:
 * Building backend Docker images
-
-* Run Trivy security scans
-
+* Running Trivy security scans
 * Deploying backend and frontend applications to hosting platforms
 
 ## Usage
-1. Access the web application via your browser at `http://localhost:3000` (or the appropriate URL if deployed)
-
+1. Access the web application via your browser (e.g., `http://localhost:3000` or your deployed URL)
 2. Input patient clinical and health information via the web interface
-
 3. Submit the data to receive heart failure risk predictions along with XAI explanations
-
-4. View and manage prediction history through the user dashboard (if enabled)
+4. View and manage prediction history through the user dashboard
 
 ## Disclaimer
 This project is intended for educational and research purposes only. It should not be used as a substitute for professional medical advice, diagnosis, or treatment. Always seek the advice of your physician or other qualified health provider with any questions you may have regarding a medical condition.

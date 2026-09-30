@@ -1,6 +1,7 @@
 import io
 import os
 import joblib
+from fastapi import HTTPException, status
 from core.supabase_client import supabase
 
 _pipeline_instance = None
@@ -16,7 +17,7 @@ LOCAL_MODEL_PATH = os.path.normpath(os.path.join(CURRENT_DIR, "../../notebooks/m
 def load_model_startup():
     global _pipeline_instance
 
-    # --- Load từ local path ---
+    # Thử load từ local path
     if os.path.exists(LOCAL_MODEL_PATH):
         print(f"Found local model at: {LOCAL_MODEL_PATH}")
         try:
@@ -25,37 +26,45 @@ def load_model_startup():
             return
         except Exception as e:
             print(f"Failed to load local model. Error: {e}")
-            print("Switching to Supabase download...")
+            print("Switching to Storage download...")
     else:
-        print(f"Local model not found at {LOCAL_MODEL_PATH}. Downloading from Cloud...")
+        print(f"Local model not found at {LOCAL_MODEL_PATH}. Attempting to download from Storage...")
 
-    # --- Fallback tải từ Supabase ---
-    print(f"Connecting Storage to download {MODEL_FILENAME}...")
+    # Thử tải từ Storage (Supabase Storage hoặc Local File Storage)
     try:
         data = supabase.storage.from_(BUCKET_NAME).download(MODEL_FILENAME)
-        
-        # Load trực tiếp từ memory buffer (hoạt động đa nền tảng Windows, Linux, macOS, Docker)
-        _pipeline_instance = joblib.load(io.BytesIO(data))
-        print("Download and load complete from Supabase.")
 
-        # Tùy chọn: Lưu cache về local để các lần khởi động tiếp theo không phải tải lại qua mạng
+        # Load trực tiếp từ memory buffer
+        _pipeline_instance = joblib.load(io.BytesIO(data))
+        print("Model downloaded and loaded complete from Storage.")
+
+        # Lưu file về local để các lần khởi động tiếp theo không phải tải lại qua mạng
         try:
-            cache_dir = os.path.dirname(LOCAL_MODEL_PATH)
-            if cache_dir:
-                os.makedirs(cache_dir, exist_ok=True)
+            model_dir = os.path.dirname(LOCAL_MODEL_PATH)
+            if model_dir:
+                os.makedirs(model_dir, exist_ok=True)
             with open(LOCAL_MODEL_PATH, "wb") as f:
                 f.write(data)
-            print(f"Downloaded model locally at: {LOCAL_MODEL_PATH}")
-        except Exception as cache_err:
-            print(f"Notice: Could not download model to disk ({cache_err}).")
+            print(f"Saved model locally at: {LOCAL_MODEL_PATH}")
+        except Exception as save_err:
+            print(f"Notice: Could not save model to disk ({save_err}).")
     except Exception as e:
-        print("Unable to download model from Supabase.")
-        print(f"Error details: {str(e)}")
-        raise e
+        print(f"Notice: Pretrained model not found ({e}).")
+        print(
+            "API started successfully in graceful mode. Prediction endpoints will be disabled until a model is trained or provided."
+        )
+        _pipeline_instance = None
 
 
 def get_pipeline():
+    global _pipeline_instance
     if _pipeline_instance is None:
-        # Fallback: Nếu chưa load thì load ngay lập tức
+        # Thử nạp lại phòng trường hợp model vừa được train hoặc thêm mới
         load_model_startup()
+
+    if _pipeline_instance is None:
+        raise HTTPException(
+            status_code=status.HTTP_503_SERVICE_UNAVAILABLE,
+            detail="Pretrained AI model is not loaded.",
+        )
     return _pipeline_instance
