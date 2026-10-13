@@ -7,6 +7,7 @@ import toast from "react-hot-toast";
 import { FaUpload } from "react-icons/fa6";
 import { FiFileText, FiInfo } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
+import CustomSelect from "@/components/ui/customSelect";
 import { useTranslations } from "next-intl";
 
 export default function PredictBatchTab() {
@@ -319,17 +320,15 @@ export default function PredictBatchTab() {
                                     <label htmlFor="target-column" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                         {t("configuration.resultColumn")} <span className="text-gray-400 text-sm font-normal ml-1">({t("configuration.optional")})</span>
                                     </label>
-                                    <select
+                                    <CustomSelect
                                         id="target-column"
                                         value={selectedTarget}
-                                        onChange={(e) => setSelectedTarget(e.target.value)}
-                                        className={inputClass}
-                                    >
-                                        <option value="">{t("configuration.none")}</option>
-                                        {columns.map((col, index) => (
-                                            <option key={index} value={col}>{col}</option>
-                                        ))}
-                                    </select>
+                                        onChange={setSelectedTarget}
+                                        options={[
+                                            { value: "", label: t("configuration.none") },
+                                            ...columns.map((col) => ({ value: col, label: col })),
+                                        ]}
+                                    />
                                     <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
                                         {t("configuration.description")}
                                     </p>

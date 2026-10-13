@@ -7,6 +7,7 @@ import { FiFileText, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import toast from "react-hot-toast";
 import { api } from "@/lib/api";
+import CustomSelect from "@/components/ui/customSelect";
 import { useTranslations } from "next-intl";
 
 export default function Upload() {
@@ -279,17 +280,13 @@ export default function Upload() {
                                 <label htmlFor="target-column" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                     {t("configuration.targetColumn.label")} <span className="text-red-500">*</span>
                                 </label>
-                                <select
+                                <CustomSelect
                                     id="target-column"
                                     value={selectedTarget}
-                                    onChange={(e) => setSelectedTarget(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="" disabled>{t("configuration.targetColumn.placeholder")}</option>
-                                    {columns.map((col, index) => (
-                                        <option key={index} value={col}>{col}</option>
-                                    ))}
-                                </select>
+                                    placeholder={t("configuration.targetColumn.placeholder")}
+                                    onChange={setSelectedTarget}
+                                    options={columns.map((col) => ({ value: col, label: col }))}
+                                />
                                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("configuration.targetColumn.desc")}</p>
                             </div>
 
@@ -313,27 +310,37 @@ export default function Upload() {
                                 {isPreprocessingOpen && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-2 animate-in fade-in duration-300">
                                         <div>
-                                            <label htmlFor="imputation" className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                            <label htmlFor="imputation" className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                                 {t("configuration.preprocessing.imputation.label")}
                                             </label>
-                                            <select id="imputation" value={imputationMethod} onChange={(e) => setImputationMethod(e.target.value)} className={inputClass}>
-                                                <option value="default">{t("configuration.preprocessing.imputation.default")}</option>
-                                                <option value="knn">{t("configuration.preprocessing.imputation.knn")}</option>
-                                                <option value="mice">{t("configuration.preprocessing.imputation.mice")}</option>
-                                                <option value="mean">{t("configuration.preprocessing.imputation.mean")}</option>
-                                            </select>
+                                            <CustomSelect
+                                                id="imputation"
+                                                value={imputationMethod}
+                                                onChange={setImputationMethod}
+                                                options={[
+                                                    { value: "default", label: t("configuration.preprocessing.imputation.default") },
+                                                    { value: "knn", label: t("configuration.preprocessing.imputation.knn") },
+                                                    { value: "mice", label: t("configuration.preprocessing.imputation.mice") },
+                                                    { value: "mean", label: t("configuration.preprocessing.imputation.mean") },
+                                                ]}
+                                            />
                                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("configuration.preprocessing.imputation.desc")}</p>
                                         </div>
 
                                         <div>
-                                            <label htmlFor="balancing" className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                            <label htmlFor="balancing" className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                                 {t("configuration.preprocessing.balancing.label")}
                                             </label>
-                                            <select id="balancing" value={dataBalancing} onChange={(e) => setDataBalancing(e.target.value)} className={inputClass}>
-                                                <option value="none">{t("configuration.preprocessing.balancing.none")}</option>
-                                                <option value="adasyn">{t("configuration.preprocessing.balancing.adasyn")}</option>
-                                                <option value="smote">{t("configuration.preprocessing.balancing.smote")}</option>
-                                            </select>
+                                            <CustomSelect
+                                                id="balancing"
+                                                value={dataBalancing}
+                                                onChange={setDataBalancing}
+                                                options={[
+                                                    { value: "none", label: t("configuration.preprocessing.balancing.none") },
+                                                    { value: "adasyn", label: t("configuration.preprocessing.balancing.adasyn") },
+                                                    { value: "smote", label: t("configuration.preprocessing.balancing.smote") },
+                                                ]}
+                                            />
                                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                                                 <strong>{t("configuration.preprocessing.balancing.note")}</strong> {t("configuration.preprocessing.balancing.desc")}
                                             </p>

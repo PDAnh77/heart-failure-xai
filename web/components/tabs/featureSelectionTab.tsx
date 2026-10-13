@@ -10,6 +10,7 @@ import toast from "react-hot-toast";
 import { EvalResult, FSResult } from "@/types/feature_selection";
 import ImageModal from "../modals/imageModal";
 import MetricCompare from "../ui/metricCompare";
+import CustomSelect from "../ui/customSelect";
 
 interface FeatureSelectionTabProps {
     targetColumn: string;
@@ -841,18 +842,19 @@ export default function FeatureSelectionTab({
 
                                 {/* Data Balancing Method Dropdown */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                    <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                         Data balancing
                                     </label>
-                                    <select
+                                    <CustomSelect
+                                        id="data-balancing"
                                         value={localBalancing}
-                                        onChange={(e) => setLocalBalancing(e.target.value)}
-                                        className={inputClass}
-                                    >
-                                        <option value="none">None</option>
-                                        <option value="adasyn">ADASYN</option>
-                                        <option value="smote">SMOTE</option>
-                                    </select>
+                                        onChange={setLocalBalancing}
+                                        options={[
+                                            { value: "none", label: "None" },
+                                            { value: "adasyn", label: "ADASYN" },
+                                            { value: "smote", label: "SMOTE" },
+                                        ]}
+                                    />
                                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Choose method to handle imbalanced classes.</p>
                                 </div>
 

@@ -6,6 +6,7 @@ import { FiFileText, FiRefreshCcw } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import toast from "react-hot-toast";
 import { api } from "@/lib/api";
+import CustomSelect from "@/components/ui/customSelect";
 import { useTranslations } from "next-intl";
 
 export default function TrainModel() {
@@ -245,20 +246,14 @@ export default function TrainModel() {
                                         <label htmlFor="target-column" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                             {t("configuration.targetColumn.label")} <span className="text-red-500">*</span>
                                         </label>
-                                        <select
+                                        <CustomSelect
                                             id="target-column"
                                             value={targetColumn}
-                                            onChange={(e) => setTargetColumn(e.target.value)}
-                                            className={inputClass}
+                                            placeholder={isLoadingColumns ? t("configuration.targetColumn.loading") : t("configuration.targetColumn.select")}
                                             disabled={isLoadingColumns}
-                                        >
-                                            <option value="" disabled>
-                                                {isLoadingColumns ? t("configuration.targetColumn.loading") : t("configuration.targetColumn.select")}
-                                            </option>
-                                            {columns.map((col, index) => (
-                                                <option key={index} value={col}>{col}</option>
-                                            ))}
-                                        </select>
+                                            onChange={setTargetColumn}
+                                            options={columns.map((col) => ({ value: col, label: col }))}
+                                        />
                                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("configuration.targetColumn.desc")}</p>
                                     </div>
 
@@ -266,20 +261,12 @@ export default function TrainModel() {
                                         <label htmlFor="model-selection" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                             {t("configuration.modelSelection.label")}
                                         </label>
-                                        <select
+                                        <CustomSelect
                                             id="model-selection"
                                             value={modelName}
-                                            onChange={(e) => setModelName(e.target.value)}
-                                            className={inputClass}
-                                        >
-                                            <option value="svc">SVC (Support Vector Classification)</option>
-                                            <option value="logistic_regression">Logistic Regression</option>
-                                            <option value="random_forest">Random Forest</option>
-                                            <option value="decision_tree">Decision Tree</option>
-                                            <option value="knn">K-Nearest Neighbors</option>
-                                            <option value="xgboost">XGBoost</option>
-                                            <option value="lightgbm">LightGBM</option>
-                                        </select>
+                                            onChange={setModelName}
+                                            options={Object.entries(modelDisplayNames).map(([val, lbl]) => ({ value: val, label: lbl }))}
+                                        />
                                         <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("configuration.modelSelection.desc")}</p>
                                     </div>
 
