@@ -170,6 +170,10 @@ export default function PredictIndividualTab() {
         restingEcgRef.current?.setValue("");
         stSlopeRef.current?.setValue("");
 
+        // Mặc định exercise-angina là No
+        const noRadio = formRef.current?.querySelector('input[name="exercise-angina"][value="N"]') as HTMLInputElement;
+        if (noRadio) noRadio.checked = true;
+
         topRef.current?.scrollIntoView({
             behavior: "smooth",
             block: "start",
@@ -241,25 +245,27 @@ export default function PredictIndividualTab() {
     return (
         <div className="p-4 mx-auto">
             <h1 ref={topRef} className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
-            <p className="mt-1 text-gray-600 dark:text-gray-400">{t("description")}</p>
-            <div className="mt-5">
-                <button
-                    type="button"
-                    onClick={handleAutoFillForm}
-                    ref={autoFillBtnRef}
-                    className="rounded-lg px-5 py-2.5 bg-gray-100 border border-gray-200 text-base font-semibold text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors dark:bg-gray-800 dark:border-gray-700 dark:text-gray-300 dark:hover:bg-gray-700"
-                >
-                    {t("buttons.autoFillSample")}
-                </button>
-            </div>
+            <p className="mt-1 text-gray-600 dark:text-gray-400 mb-6">{t("description")}</p>
+            <form ref={formRef} onSubmit={handleSubmit} noValidate>
+                <div className="bg-white dark:bg-gray-800/60 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700">
+                    
+                    {/* Header: Demographic Title & Auto-fill sample button in top right corner */}
+                    <div className="flex items-center justify-between pb-4 mb-6 border-b border-gray-200 dark:border-gray-700">
+                        <h3 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
+                            <FaUserAlt className="text-indigo-600 dark:text-indigo-400" /> {t("sections.demographic")}
+                        </h3>
+                        <button
+                            type="button"
+                            onClick={handleAutoFillForm}
+                            ref={autoFillBtnRef}
+                            className="rounded-lg px-4 py-2 bg-gray-100 border border-gray-200 text-sm font-semibold text-gray-700 hover:bg-gray-200 cursor-pointer transition-colors dark:bg-gray-700 dark:border-gray-600 dark:text-gray-300 dark:hover:bg-gray-600 shadow-2xs"
+                        >
+                            {t("buttons.autoFillSample")}
+                        </button>
+                    </div>
 
-            <form ref={formRef} onSubmit={handleSubmit} noValidate className="mt-10">
-                {/* CARD 1: Demographic Data */}
-                <div className="bg-white dark:bg-gray-800/60 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                        <FaUserAlt className="text-indigo-600 dark:text-indigo-400" /> {t("sections.demographic")}
-                    </h3>
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                    {/* Section 1 Inputs: Demographic */}
+                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2 mb-8">
                         {/* Gender */}
                         <div>
                             <label htmlFor="gender" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.gender.label")} <RequiredMark /></label>
@@ -284,172 +290,172 @@ export default function PredictIndividualTab() {
                             <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.age.description")}</p>
                         </div>
                     </div>
-                </div>
 
-                {/* CARD 2: Cardiovascular Metrics */}
-                <div className="bg-white dark:bg-gray-800/60 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                        <FaHeartbeat className="text-indigo-600 dark:text-indigo-400" /> {t("sections.cardiovascular")}
-                    </h3>
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Resting BP */}
-                        <div>
-                            <label htmlFor="resting-bp" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.restingBp.label")} <RequiredMark /></label>
-                            <div className="relative">
-                                <input id="resting-bp" type="number" name="resting-bp" placeholder={t("fields.restingBp.placeholder")} onChange={handleInputChange} className={getInputClass("resting-bp", true)} />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">MMHG</span>
+                    {/* Section 2: Cardiovascular Metrics */}
+                    <div className="pt-2 mb-8">
+                        <h3 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                            <FaHeartbeat className="text-indigo-600 dark:text-indigo-400" /> {t("sections.cardiovascular")}
+                        </h3>
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                            {/* Resting BP */}
+                            <div>
+                                <label htmlFor="resting-bp" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.restingBp.label")} <RequiredMark /></label>
+                                <div className="relative">
+                                    <input id="resting-bp" type="number" name="resting-bp" placeholder={t("fields.restingBp.placeholder")} onChange={handleInputChange} className={getInputClass("resting-bp", true)} />
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">MMHG</span>
+                                    </div>
                                 </div>
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.restingBp.description")}</p>
                             </div>
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.restingBp.description")}</p>
-                        </div>
-                        {/* Cholesterol */}
-                        <div>
-                            <label htmlFor="cholesterol" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.cholesterol.label")} <RequiredMark /></label>
-                            <div className="relative">
-                                <input id="cholesterol" type="number" name="cholesterol" placeholder={t("fields.cholesterol.placeholder")} onChange={handleInputChange} className={getInputClass("cholesterol", true)} />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">MG/DL</span>
+                            {/* Cholesterol */}
+                            <div>
+                                <label htmlFor="cholesterol" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.cholesterol.label")} <RequiredMark /></label>
+                                <div className="relative">
+                                    <input id="cholesterol" type="number" name="cholesterol" placeholder={t("fields.cholesterol.placeholder")} onChange={handleInputChange} className={getInputClass("cholesterol", true)} />
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">MG/DL</span>
+                                    </div>
                                 </div>
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.cholesterol.description")}</p>
                             </div>
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.cholesterol.description")}</p>
-                        </div>
-                        {/* Max HR */}
-                        <div>
-                            <label htmlFor="max-hr" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.maxHr.label")} <RequiredMark /></label>
-                            <div className="relative">
-                                <input id="max-hr" type="number" name="max-hr" placeholder={t("fields.maxHr.placeholder")} onChange={handleInputChange} className={getInputClass("max-hr", true)} />
-                                <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
-                                    <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">BPM</span>
+                            {/* Max HR */}
+                            <div>
+                                <label htmlFor="max-hr" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.maxHr.label")} <RequiredMark /></label>
+                                <div className="relative">
+                                    <input id="max-hr" type="number" name="max-hr" placeholder={t("fields.maxHr.placeholder")} onChange={handleInputChange} className={getInputClass("max-hr", true)} />
+                                    <div className="absolute inset-y-0 right-0 flex items-center pr-4 pointer-events-none">
+                                        <span className="text-[10px] font-bold text-gray-400 dark:text-gray-500 uppercase tracking-widest">BPM</span>
+                                    </div>
                                 </div>
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.maxHr.description")}</p>
                             </div>
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.maxHr.description")}</p>
                         </div>
                     </div>
-                </div>
 
-                {/* CARD 3: Symptoms & Clinical History */}
-                <div className="bg-white dark:bg-gray-800/60 p-6 md:p-8 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 mb-6">
-                    <h3 className="text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
-                        <FaNotesMedical className="text-indigo-600 dark:text-indigo-400" /> {t("sections.symptoms")}
-                    </h3>
-                    <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
-                        {/* Chest Pain Type */}
-                        <div>
-                            <label htmlFor="chest-pain-type" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.chestPainType.label")} <RequiredMark /></label>
-                            <CustomSelect
-                                id="chest-pain-type"
-                                name="chest-pain-type"
-                                placeholder={t("fields.chestPainType.placeholder")}
-                                options={[
-                                    { value: "TA", label: t("fields.chestPainType.ta") },
-                                    { value: "ATA", label: t("fields.chestPainType.ata") },
-                                    { value: "NAP", label: t("fields.chestPainType.nap") },
-                                    { value: "ASY", label: t("fields.chestPainType.asy") },
-                                ]}
-                                isInvalid={invalidFields.includes("chest-pain-type")}
-                                onChange={handleSelectChange("chest-pain-type")}
-                                selectRef={chestPainRef}
-                            />
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.chestPainType.description")}</p>
-                        </div>
-                        {/* Fasting BS */}
-                        <div>
-                            <label htmlFor="fasting-bs" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.fastingBs.label")} <RequiredMark /></label>
-                            <CustomSelect
-                                id="fasting-bs"
-                                name="fasting-bs"
-                                placeholder={t("fields.fastingBs.placeholder")}
-                                options={[
-                                    { value: "1", label: t("fields.fastingBs.yes") },
-                                    { value: "0", label: t("fields.fastingBs.no") },
-                                ]}
-                                isInvalid={invalidFields.includes("fasting-bs")}
-                                onChange={handleSelectChange("fasting-bs")}
-                                selectRef={fastingBsRef}
-                            />
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.fastingBs.description")}</p>
-                        </div>
-                        {/* Resting ECG */}
-                        <div>
-                            <label htmlFor="resting-ecg" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.restingEcg.label")} <RequiredMark /></label>
-                            <CustomSelect
-                                id="resting-ecg"
-                                name="resting-ecg"
-                                placeholder={t("fields.restingEcg.placeholder")}
-                                options={[
-                                    { value: "Normal", label: t("fields.restingEcg.normal") },
-                                    { value: "ST", label: t("fields.restingEcg.st") },
-                                    { value: "LVH", label: t("fields.restingEcg.lvh") },
-                                ]}
-                                isInvalid={invalidFields.includes("resting-ecg")}
-                                onChange={handleSelectChange("resting-ecg")}
-                                selectRef={restingEcgRef}
-                            />
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.restingEcg.description")}</p>
-                        </div>
-                        {/* Exercise Angina */}
-                        <div>
-                            <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">{t("fields.exerciseAngina.label")} <RequiredMark /></label>
-                            <div className="flex items-center gap-8 h-10">
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <input type="radio" name="exercise-angina" value="Y" className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600" onChange={handleInputChange} />
-                                    <span className="text-base font-medium text-gray-700 group-hover:text-indigo-600 dark:text-gray-300">{t("fields.exerciseAngina.yes")}</span>
-                                </label>
-                                <label className="flex items-center gap-2 cursor-pointer group">
-                                    <input type="radio" name="exercise-angina" value="N" className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600" onChange={handleInputChange} />
-                                    <span className="text-base font-medium text-gray-700 group-hover:text-indigo-600 dark:text-gray-300">{t("fields.exerciseAngina.no")}</span>
-                                </label>
+                    {/* Section 3: Symptoms & Clinical History */}
+                    <div className="pt-2">
+                        <h3 className="text-lg md:text-xl font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2 mb-6 pb-4 border-b border-gray-200 dark:border-gray-700">
+                            <FaNotesMedical className="text-indigo-600 dark:text-indigo-400" /> {t("sections.symptoms")}
+                        </h3>
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2">
+                            {/* Chest Pain Type */}
+                            <div>
+                                <label htmlFor="chest-pain-type" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.chestPainType.label")} <RequiredMark /></label>
+                                <CustomSelect
+                                    id="chest-pain-type"
+                                    name="chest-pain-type"
+                                    placeholder={t("fields.chestPainType.placeholder")}
+                                    options={[
+                                        { value: "TA", label: t("fields.chestPainType.ta") },
+                                        { value: "ATA", label: t("fields.chestPainType.ata") },
+                                        { value: "NAP", label: t("fields.chestPainType.nap") },
+                                        { value: "ASY", label: t("fields.chestPainType.asy") },
+                                    ]}
+                                    isInvalid={invalidFields.includes("chest-pain-type")}
+                                    onChange={handleSelectChange("chest-pain-type")}
+                                    selectRef={chestPainRef}
+                                />
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.chestPainType.description")}</p>
                             </div>
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.exerciseAngina.description")}</p>
-                            {invalidFields.includes("exercise-angina") && (
-                                <p className="mt-1 text-sm text-red-500">{t("fields.exerciseAngina.required")}</p>
-                            )}
-                        </div>
-                        {/* Oldpeak */}
-                        <div>
-                            <label htmlFor="oldpeak" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.oldpeak.label")} <RequiredMark /></label>
-                            <input id="oldpeak" type="number" name="oldpeak" step="0.1" min="-5" max="10" placeholder={t("fields.oldpeak.placeholder")} onChange={handleInputChange} className={getInputClass("oldpeak")} />
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.oldpeak.description")}</p>
-                        </div>
-                        {/* ST Slope */}
-                        <div>
-                            <label htmlFor="st-slope" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.stSlope.label")} <RequiredMark /></label>
-                            <CustomSelect
-                                id="st-slope"
-                                name="st-slope"
-                                placeholder={t("fields.stSlope.placeholder")}
-                                options={[
-                                    { value: "Up", label: t("fields.stSlope.up") },
-                                    { value: "Flat", label: t("fields.stSlope.flat") },
-                                    { value: "Down", label: t("fields.stSlope.down") },
-                                ]}
-                                isInvalid={invalidFields.includes("st-slope")}
-                                onChange={handleSelectChange("st-slope")}
-                                selectRef={stSlopeRef}
-                            />
-                            <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.stSlope.description")}</p>
+                            {/* Fasting BS */}
+                            <div>
+                                <label htmlFor="fasting-bs" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.fastingBs.label")} <RequiredMark /></label>
+                                <CustomSelect
+                                    id="fasting-bs"
+                                    name="fasting-bs"
+                                    placeholder={t("fields.fastingBs.placeholder")}
+                                    options={[
+                                        { value: "1", label: t("fields.fastingBs.yes") },
+                                        { value: "0", label: t("fields.fastingBs.no") },
+                                    ]}
+                                    isInvalid={invalidFields.includes("fasting-bs")}
+                                    onChange={handleSelectChange("fasting-bs")}
+                                    selectRef={fastingBsRef}
+                                />
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.fastingBs.description")}</p>
+                            </div>
+                            {/* Resting ECG */}
+                            <div>
+                                <label htmlFor="resting-ecg" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.restingEcg.label")} <RequiredMark /></label>
+                                <CustomSelect
+                                    id="resting-ecg"
+                                    name="resting-ecg"
+                                    placeholder={t("fields.restingEcg.placeholder")}
+                                    options={[
+                                        { value: "Normal", label: t("fields.restingEcg.normal") },
+                                        { value: "ST", label: t("fields.restingEcg.st") },
+                                        { value: "LVH", label: t("fields.restingEcg.lvh") },
+                                    ]}
+                                    isInvalid={invalidFields.includes("resting-ecg")}
+                                    onChange={handleSelectChange("resting-ecg")}
+                                    selectRef={restingEcgRef}
+                                />
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.restingEcg.description")}</p>
+                            </div>
+                            {/* Exercise Angina */}
+                            <div>
+                                <label className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-3">{t("fields.exerciseAngina.label")} <RequiredMark /></label>
+                                <div className="flex items-center gap-8 h-12">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input type="radio" name="exercise-angina" value="Y" className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600" onChange={handleInputChange} />
+                                        <span className="text-base font-medium text-gray-700 group-hover:text-indigo-600 dark:text-gray-300">{t("fields.exerciseAngina.yes")}</span>
+                                    </label>
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <input type="radio" name="exercise-angina" value="N" defaultChecked className="w-4 h-4 text-indigo-600 bg-gray-100 border-gray-300 focus:ring-indigo-500 dark:ring-offset-gray-800 dark:bg-gray-700 dark:border-gray-600" onChange={handleInputChange} />
+                                        <span className="text-base font-medium text-gray-700 group-hover:text-indigo-600 dark:text-gray-300">{t("fields.exerciseAngina.no")}</span>
+                                    </label>
+                                </div>
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.exerciseAngina.description")}</p>
+                                {invalidFields.includes("exercise-angina") && (
+                                    <p className="mt-1 text-sm text-red-500">{t("fields.exerciseAngina.required")}</p>
+                                )}
+                            </div>
+                            {/* Oldpeak */}
+                            <div>
+                                <label htmlFor="oldpeak" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.oldpeak.label")} <RequiredMark /></label>
+                                <input id="oldpeak" type="number" name="oldpeak" step="0.1" min="-5" max="10" placeholder={t("fields.oldpeak.placeholder")} onChange={handleInputChange} className={getInputClass("oldpeak")} />
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.oldpeak.description")}</p>
+                            </div>
+                            {/* ST Slope */}
+                            <div>
+                                <label htmlFor="st-slope" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">{t("fields.stSlope.label")} <RequiredMark /></label>
+                                <CustomSelect
+                                    id="st-slope"
+                                    name="st-slope"
+                                    placeholder={t("fields.stSlope.placeholder")}
+                                    options={[
+                                        { value: "Up", label: t("fields.stSlope.up") },
+                                        { value: "Flat", label: t("fields.stSlope.flat") },
+                                        { value: "Down", label: t("fields.stSlope.down") },
+                                    ]}
+                                    isInvalid={invalidFields.includes("st-slope")}
+                                    onChange={handleSelectChange("st-slope")}
+                                    selectRef={stSlopeRef}
+                                />
+                                <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("fields.stSlope.description")}</p>
+                            </div>
                         </div>
                     </div>
-                </div>
 
-                {/* Các Nút Hành Động */}
-                <div className="mt-8 flex items-center justify-end gap-x-4 border-t border-gray-100 dark:border-gray-800 pt-6">
-                    <button
-                        type="button"
-                        onClick={handleReset}
-                        disabled={submitting}
-                        className="rounded-xl px-8 py-3 text-base font-semibold text-gray-700 bg-white border border-gray-200 cursor-pointer hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        {t("buttons.resetForm")}
-                    </button>
-                    <button
-                        type="submit"
-                        disabled={submitting}
-                        className="rounded-xl bg-indigo-600 px-8 py-3 text-base font-semibold text-white shadow-sm cursor-pointer hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
-                    >
-                        {submitting ? t("buttons.analyzing") : t("buttons.predict")}
-                    </button>
+                    <div className="mt-10 pt-6 flex items-center justify-end gap-x-4 border-t border-gray-100 dark:border-gray-700/60">
+                        <button
+                            type="button"
+                            onClick={handleReset}
+                            disabled={submitting}
+                            className="rounded-xl px-8 py-3 text-base font-semibold text-gray-700 bg-white border border-gray-200 cursor-pointer hover:bg-gray-50 hover:text-indigo-600 transition-colors shadow-sm dark:bg-gray-800 dark:border-gray-700 dark:text-gray-200 dark:hover:bg-gray-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        >
+                            {t("buttons.resetForm")}
+                        </button>
+                        <button
+                            type="submit"
+                            disabled={submitting}
+                            className="rounded-xl bg-indigo-600 px-8 py-3 text-base font-semibold text-white shadow-sm cursor-pointer hover:bg-indigo-700 focus:ring-4 focus:ring-indigo-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
+                        >
+                            {submitting ? t("buttons.analyzing") : t("buttons.predict")}
+                        </button>
+                    </div>
+                    
                 </div>
             </form>
         </div>

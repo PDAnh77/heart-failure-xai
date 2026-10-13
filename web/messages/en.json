@@ -150,9 +150,9 @@
     "title": "Patient Information",
     "description": "Please provide accurate patient information for better prediction results",
     "buttons": {
-      "autoFillSample": "Auto-fill sample",
+      "autoFillSample": "Sample",
       "loading": "Loading...",
-      "resetForm": "Reset Form",
+      "resetForm": "Reset form",
       "analyzing": "Analyzing...",
       "predict": "Predict"
     },
