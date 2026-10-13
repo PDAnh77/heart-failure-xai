@@ -178,9 +178,14 @@ def create_user(db: Session, new_user: UserSignup):
     if user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already existed")
     new_user.password = get_password_hash(new_user.password)
-    db.execute(insert(User).values(new_user.model_dump()))
+    user_dict = new_user.model_dump()
+    if not user_dict.get("role"):
+        user_dict["role"] = "user"
+    result = db.execute(insert(User).values(user_dict).returning(User))
+    user_obj = result.scalar_one()
     db.commit()
-    return {"detail": "Create user successfully"}
+    db.refresh(user_obj)
+    return user_obj
 
 
 def logout_user(db: Session, request: Request, response: Response):

@@ -28,28 +28,49 @@
   },
   "login": {
     "title": "Đăng nhập tài khoản",
+    "signUpTitle": "Đăng ký tài khoản mới",
+    "tabSignIn": "Đăng nhập",
+    "tabSignUp": "Đăng ký",
+    "devBadge": "Môi trường Local",
     "fields": {
       "loginId": "Tên đăng nhập hoặc Email",
       "loginIdPlaceholder": "Tên đăng nhập hoặc Email",
+      "username": "Tên đăng nhập",
+      "usernamePlaceholder": "Chọn tên đăng nhập",
+      "email": "Email (tùy chọn)",
+      "emailPlaceholder": "ten@example.com",
+      "role": "Vai trò tài khoản",
+      "roleUser": "Người dùng (User)",
+      "roleAdmin": "Quản trị viên (Admin)",
       "password": "Mật khẩu",
-      "passwordPlaceholder": "Mật khẩu"
+      "passwordPlaceholder": "Mật khẩu",
+      "confirmPassword": "Xác nhận mật khẩu",
+      "confirmPasswordPlaceholder": "Nhập lại mật khẩu"
     },
     "actions": {
       "signIn": "Đăng nhập",
-      "signingIn": "Đang đăng nhập..."
+      "signingIn": "Đang đăng nhập...",
+      "signUp": "Đăng ký tài khoản",
+      "signingUp": "Đang đăng ký..."
     },
     "errors": {
       "loginIdRequired": "Vui lòng nhập tên đăng nhập hoặc email.",
-      "passwordRequired": "Vui lòng nhập mật khẩu."
+      "usernameRequired": "Vui lòng nhập tên đăng nhập.",
+      "passwordRequired": "Vui lòng nhập mật khẩu.",
+      "passwordsDoNotMatch": "Mật khẩu xác nhận không khớp."
     },
     "toast": {
       "success": "Đăng nhập thành công.",
+      "signUpSuccess": "Đăng ký tài khoản thành công!",
+      "userAlreadyExists": "Tên đăng nhập đã tồn tại. Vui lòng chọn tên khác.",
       "invalidCredentials": "Thông tin đăng nhập không hợp lệ",
       "genericError": "Đã có lỗi xảy ra. Vui lòng thử lại sau."
     },
     "other": {
       "orSignInWith": "Hoặc đăng nhập bằng",
-      "forgotPassword": "Quên mật khẩu?"
+      "forgotPassword": "Quên mật khẩu?",
+      "dontHaveAccount": "Chưa có tài khoản?",
+      "alreadyHaveAccount": "Đã có tài khoản?"
     }
   },
   "settings": {

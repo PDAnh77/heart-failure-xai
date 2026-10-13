@@ -28,28 +28,49 @@
   },
   "login": {
     "title": "Sign in to your account",
+    "signUpTitle": "Create a new account",
+    "tabSignIn": "Sign in",
+    "tabSignUp": "Sign up",
+    "devBadge": "Local",
     "fields": {
       "loginId": "Username or Email",
       "loginIdPlaceholder": "Username or Email",
+      "username": "Username",
+      "usernamePlaceholder": "Choose a username",
+      "email": "Email (optional)",
+      "emailPlaceholder": "name@example.com",
+      "role": "Account role",
+      "roleUser": "User",
+      "roleAdmin": "Admin",
       "password": "Password",
-      "passwordPlaceholder": "Password"
+      "passwordPlaceholder": "Password",
+      "confirmPassword": "Confirm password",
+      "confirmPasswordPlaceholder": "Re-enter your password"
     },
     "actions": {
       "signIn": "Sign in",
-      "signingIn": "Signing in..."
+      "signingIn": "Signing in...",
+      "signUp": "Create account",
+      "signingUp": "Creating account..."
     },
     "errors": {
       "loginIdRequired": "Please enter username or email.",
-      "passwordRequired": "Please enter password."
+      "usernameRequired": "Please enter a username.",
+      "passwordRequired": "Please enter password.",
+      "passwordsDoNotMatch": "Passwords do not match."
     },
     "toast": {
       "success": "Signed in successfully.",
+      "signUpSuccess": "Account created successfully!",
+      "userAlreadyExists": "Username already exists. Please choose another.",
       "invalidCredentials": "Invalid login info",
       "genericError": "An error occurred. Please try again later."
     },
     "other": {
       "orSignInWith": "Or sign in with",
-      "forgotPassword": "Forgot password?"
+      "forgotPassword": "Forgot password?",
+      "dontHaveAccount": "Don't have an account?",
+      "alreadyHaveAccount": "Already have an account?"
     }
   },
   "settings": {
