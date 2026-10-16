@@ -4,19 +4,17 @@ import os
 from routers import auth_router, user_router, prediction_router, patient_router, dataset_router, train_router
 from contextlib import asynccontextmanager
 import httpx, asyncio
+from sqlalchemy import text
 from core.model_loader import load_model_startup
 from core.config import settings
-from db.database import init_db
+from db.database import init_db, engine
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 
 async def ping_self():
     url = settings.API_URL
-    if not url:
-        print("Skipping self-ping")
-        return
-    if "localhost" in url:
+    if not url or "localhost" in url:
         print("Skipping self-ping")
         return
     health_url = f"{url.rstrip('/')}/health"
@@ -31,13 +29,36 @@ async def ping_self():
         await asyncio.sleep(10 * 60)
 
 
+async def ping_db_daily():
+    url = settings.API_URL
+    if not url or "localhost" in url:
+        print("Skipping daily DB ping")
+        return
+    db_health_url = f"{url.rstrip('/')}/health/db"
+
+    # Đợi server khởi động xong trước lần gọi đầu tiên
+    await asyncio.sleep(30)
+
+    while True:
+        try:
+            async with httpx.AsyncClient(timeout=15.0) as client:
+                r = await client.get(db_health_url)
+                print(f"Daily DB ping: ({db_health_url}): {r.status_code}")
+        except Exception as e:
+            print(f"Error pinging DB: {e}")
+        # Chờ 1 ngày cho lần gọi tiếp theo
+        await asyncio.sleep(24 * 60 * 60)
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     init_db()
     load_model_startup()
-    task = asyncio.create_task(ping_self())
+    ping_self_task = asyncio.create_task(ping_self())
+    ping_db_task = asyncio.create_task(ping_db_daily())
     yield
-    task.cancel()  # Hủy task khi API tắt
+    ping_self_task.cancel()  # Hủy task khi API tắt
+    ping_db_task.cancel()
 
 
 app = FastAPI(title="Heart Failure Analytics API", openapi_url="/api/openapi.json", docs_url="/docs", lifespan=lifespan)
@@ -72,3 +93,22 @@ def root():
 @app.get("/health")
 def health_check():
     return {"status": "ok"}
+
+
+@app.get("/health/db")
+async def db_health_check():
+    # Thực hiện truy vấn xuống PostgreSQL
+    with engine.connect() as conn:
+        conn.execute(text("SELECT 1"))
+
+    # Ping REST API Gateway của Supabase
+    if settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY:
+        rest_url = f"{settings.SUPABASE_URL.rstrip('/')}/rest/v1/"
+        headers = {
+            "apikey": settings.SUPABASE_SERVICE_ROLE_KEY,
+            "Authorization": f"Bearer {settings.SUPABASE_SERVICE_ROLE_KEY}",
+        }
+        async with httpx.AsyncClient(timeout=10.0) as client:
+            await client.get(rest_url, headers=headers)
+
+    return {"status": "ok", "database": "connected"}

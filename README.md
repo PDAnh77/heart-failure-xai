@@ -111,7 +111,7 @@ The repository is organized as follows:
 
 ## Prerequisites
 * **Python**: `3.13` (Recommend)
-* **PostgreSQL**: `14+` (or Docker)
+* **PostgreSQL**: `14+`
 * **Node.js**: `20.9.0+`
 
 ## Installation & Setup
