@@ -15,7 +15,7 @@ from starlette.middleware.sessions import SessionMiddleware
 async def ping_self():
     url = settings.API_URL
     if not url or "localhost" in url:
-        print("Skipping self-ping")
+        print("Skipping self ping")
         return
     health_url = f"{url.rstrip('/')}/health"
 
@@ -32,7 +32,7 @@ async def ping_self():
 async def ping_db_daily():
     url = settings.API_URL
     if not url or "localhost" in url:
-        print("Skipping daily DB ping")
+        print("Skipping DB ping")
         return
     db_health_url = f"{url.rstrip('/')}/health/db"
 
