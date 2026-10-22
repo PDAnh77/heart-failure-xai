@@ -271,11 +271,6 @@
       }
     },
     "configuration": {
-      "title": "Cấu hình dự đoán",
-      "resultColumn": "Cột lưu kết quả",
-      "optional": "Không bắt buộc",
-      "none": "Không",
-      "description": "Chọn một cột để ghi kết quả dự đoán vào. Nếu để trống, hệ thống sẽ tự động thêm một cột mới vào tệp của bạn.",
       "systemNotice": "Lưu ý từ hệ thống",
       "noticeDescription": "Các cột không được hỗ trợ bởi lược đồ mô hình lâm sàng (tiêu đề đặc trưng không nhận dạng được) sẽ tự động bị bỏ qua trong quá trình dự đoán để tránh nhiễu dữ liệu."
     },

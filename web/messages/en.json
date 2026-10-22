@@ -271,11 +271,6 @@
       }
     },
     "configuration": {
-      "title": "Prediction configuration",
-      "resultColumn": "Save result to column",
-      "optional": "Optional",
-      "none": "No",
-      "description": "Select a column to write the prediction results into. If left empty, the system will automatically append a new column to your file.",
       "systemNotice": "System notice",
       "noticeDescription": "Columns not supported by the clinical model schema (unrecognized feature headers) will be automatically ignored during the prediction process to prevent noise."
     },

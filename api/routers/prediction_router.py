@@ -85,11 +85,10 @@ def create_batch_prediction(patients: List[PatientBase]):
 @router.post("/upload/{dataset_id}")
 def create_prediction_from_file(
     dataset_id: str,
-    target_column: str = Query(None),
     user=Depends(require_roles(["admin", "user"])),
     db: Session = Depends(get_db),
 ):
-    return predict_dataframe(db, dataset_id, user["user_id"], target_column)
+    return predict_dataframe(db, dataset_id, user["user_id"])
 
 
 @router.post("/xai/on-demand", dependencies=[Depends(require_roles(["admin", "user"]))])
