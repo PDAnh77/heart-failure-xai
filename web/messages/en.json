@@ -453,6 +453,10 @@
       },
       "featureSelection": {
         "title": "Feature selection (Genetic algorithm)",
+        "model": {
+          "label": "Evaluation model",
+          "desc": "Machine learning algorithm used to evaluate feature subsets."
+        },
         "size": {
           "label": "Population size",
           "desc": "Number of individuals in each generation. (Range: 10 - 200)."

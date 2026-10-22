@@ -21,7 +21,7 @@ from imblearn.over_sampling import ADASYN, SMOTE
 from core.supabase_client import supabase
 
 from services.plot_service import upload_plot
-from services.dataset_service import load_dataset, _sanitize, DATASET_BUCKET, AVAILABLE_MODELS, SELECTED_MODEL
+from services.dataset_service import load_dataset, _sanitize, DATASET_BUCKET, AVAILABLE_MODELS, DEFAULT_FEATURE_SELECTION_MODEL
 
 task_store: Dict[str, Dict[str, Any]] = {}
 
@@ -202,7 +202,7 @@ def genetic_selection(
             }
 
     # --- CHỌN MÔ HÌNH ---
-    default_model = SELECTED_MODEL
+    default_model = DEFAULT_FEATURE_SELECTION_MODEL
 
     if default_model and default_model not in AVAILABLE_MODELS:
         print(f"Model '{default_model}' is not supported. Available models: {list(AVAILABLE_MODELS.keys())}")
@@ -210,7 +210,7 @@ def genetic_selection(
 
     final_model = default_model
 
-    if user["role"] == "admin" and model_name:
+    if model_name:
         if model_name in AVAILABLE_MODELS:
             final_model = model_name
         else:
@@ -370,7 +370,7 @@ def evaluate_feature_selection(
     Y_test_sel = Y_test_orig.copy()
 
     # Xác định mô hình sử dụng
-    final_model_name = model_name if (user["role"] == "admin" and model_name) else SELECTED_MODEL
+    final_model_name = model_name if model_name else DEFAULT_FEATURE_SELECTION_MODEL
     if final_model_name not in AVAILABLE_MODELS:
         final_model_name = "decision_tree"
 

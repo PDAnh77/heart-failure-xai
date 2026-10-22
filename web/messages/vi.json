@@ -164,7 +164,7 @@
       "predictionFailed": "Đã xảy ra lỗi trong quá trình dự đoán."
     },
     "sections": {
-      "demographic": "Dữ liệu nhân khẩu học",
+      "demographic": "Dữ liệu tổng quan",
       "cardiovascular": "Chỉ số tim mạch",
       "symptoms": "Triệu chứng và tiền sử lâm sàng"
     },
@@ -453,6 +453,10 @@
       },
       "featureSelection": {
         "title": "Lựa chọn đặc trưng (Thuật toán di truyền)",
+        "model": {
+          "label": "Mô hình đánh giá",
+          "desc": "Thuật toán học máy dùng để chấm điểm và đánh giá tập đặc trưng."
+        },
         "size": {
           "label": "Kích thước quần thể (Population size)",
           "desc": "Số lượng cá thể trong mỗi thế hệ. (Khoảng: 10 - 200)."

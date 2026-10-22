@@ -11,6 +11,7 @@ import { EvalResult, FSResult } from "@/types/feature_selection";
 import ImageModal from "../modals/imageModal";
 import MetricCompare from "../ui/metricCompare";
 import CustomSelect from "../ui/customSelect";
+import { getFeatureSelectionModelOptions, isLocalEnvironment } from "@/lib/env";
 
 interface FeatureSelectionTabProps {
     targetColumn: string;
@@ -20,6 +21,7 @@ interface FeatureSelectionTabProps {
     testSize: number;
     nParents?: number;
     balancing: string;
+    modelName?: string;
 }
 
 const LOADING_MESSAGES = [
@@ -50,7 +52,8 @@ export default function FeatureSelectionTab({
     mutationRate,
     testSize,
     nParents,
-    balancing
+    balancing,
+    modelName = "decision_tree"
 }: FeatureSelectionTabProps) {
     const pollInterval = useRef<NodeJS.Timeout | null>(null);
     const evalPollInterval = useRef<NodeJS.Timeout | null>(null);
@@ -67,6 +70,12 @@ export default function FeatureSelectionTab({
     const [localMutationRate, setLocalMutationRate] = useState<number>(mutationRate);
     const [localTestSize, setLocalTestSize] = useState<number>(testSize);
     const [localNParents, setLocalNParents] = useState<number | string>(nParents ?? "");
+    const [isLocal, setIsLocal] = useState<boolean>(false);
+    useEffect(() => { setIsLocal(isLocalEnvironment()); }, []);
+
+    const [localModel, setLocalModel] = useState<string>(
+        modelName && (modelName !== "random_forest" || isLocalEnvironment()) ? modelName : "decision_tree"
+    );
 
     // --- State evaluation ---
     const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
@@ -107,7 +116,8 @@ export default function FeatureSelectionTab({
                     fs_dataset_id: fsDatasetId,
                     target_column: targetColumn,
                     test_size: localTestSize,
-                    balancing_method: localBalancing
+                    balancing_method: localBalancing,
+                    model_name: localModel
                 }
             });
 
@@ -160,7 +170,8 @@ export default function FeatureSelectionTab({
                     fs_dataset_id: fsDatasetId,
                     target_column: targetColumn,
                     instance_idx: rowIndex,
-                    test_size: localTestSize
+                    test_size: localTestSize,
+                    model_name: localModel
                 }
             });
             setEvalResult(prev => {
@@ -194,6 +205,7 @@ export default function FeatureSelectionTab({
                 mutation_rate: localMutationRate,
                 test_size: localTestSize,
                 balancing_method: localBalancing,
+                model_name: localModel,
             };
 
             if (localNParents !== "" && localNParents !== undefined) {
@@ -258,7 +270,7 @@ export default function FeatureSelectionTab({
             setIsLoading(false);
             setEvalResult(null);
         }
-    }, [processedId, targetColumn, localSize, localMutationRate, localTestSize, localNParents, localBalancing]);
+    }, [processedId, targetColumn, localSize, localMutationRate, localTestSize, localNParents, localBalancing, localModel]);
 
     // Initial API call when component mounts
     useEffect(() => {
@@ -856,6 +868,19 @@ export default function FeatureSelectionTab({
                                         ]}
                                     />
                                     <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Choose method to handle imbalanced classes.</p>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="evaluation-model" className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                                        Evaluation model
+                                    </label>
+                                    <CustomSelect
+                                        id="evaluation-model"
+                                        value={localModel}
+                                        onChange={setLocalModel}
+                                        options={getFeatureSelectionModelOptions(isLocal)}
+                                    />
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">ML algorithm used to evaluate feature subsets.</p>
                                 </div>
 
                                 {/* Population Size */}

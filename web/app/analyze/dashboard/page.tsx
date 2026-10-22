@@ -1,4 +1,5 @@
 "use client";
+import { isLocalEnvironment } from "@/lib/env";
 import { useState, Suspense, useEffect } from "react";
 import { useSearchParams, useRouter } from "next/navigation";
 import { FiBarChart2, FiCpu } from "react-icons/fi";
@@ -21,6 +22,9 @@ function DashboardContent() {
     const testSize = searchParams.get("test_size") ? Number(searchParams.get("test_size")) : 0.3;
     const nParentsStr = searchParams.get("n_parents");
     const nParents = nParentsStr ? Number(nParentsStr) : undefined;
+    const modelParam = searchParams.get("model");
+    const isLocal = isLocalEnvironment();
+    const model = (modelParam && (modelParam !== "random_forest" || isLocal)) ? modelParam : "decision_tree";
 
 
     const [activeTab, setActiveTab] = useState<"eda" | "fs">("eda");
@@ -114,6 +118,7 @@ function DashboardContent() {
                         testSize={testSize}
                         nParents={nParents}
                         balancing={balancing}
+                        modelName={model}
                     />
                 </div>
 

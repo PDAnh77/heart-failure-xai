@@ -60,24 +60,27 @@ class LocalStorageClient:
 
 
 def get_storage_client():
-    storage_type = getattr(settings, "STORAGE_TYPE", "supabase").lower()
+    storage_provider = getattr(settings, "FILE_STORAGE_PROVIDER", "local").lower().strip()
 
-    if storage_type == "local":
+    if storage_provider == "local":
         storage_dir = getattr(settings, "LOCAL_STORAGE_PATH", "storage")
         print(f"Using Local File Storage at: {os.path.abspath(storage_dir)}")
         return LocalStorageClient(base_dir=storage_dir, api_url=settings.API_URL)
+    elif storage_provider == "supabase":
+        if not (settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY):
+            raise ValueError(
+                "FILE_STORAGE_PROVIDER is set to 'supabase', but SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in .env."
+            )
 
-    # Chế độ Supabase: Yêu cầu thông tin cấu hình rõ ràng, không fallback ngầm
-    if not (settings.SUPABASE_URL and settings.SUPABASE_SERVICE_ROLE_KEY):
+        from supabase import create_client
+
+        print("Using Supabase Cloud Storage.")
+        client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
+        return client.storage
+    else:
         raise ValueError(
-            "STORAGE_TYPE is set to 'supabase', but SUPABASE_URL or SUPABASE_SERVICE_ROLE_KEY is missing in .env."
+            f"Unsupported FILE_STORAGE_PROVIDER: '{storage_provider}'. Allowed options are: 'local' or 'supabase'."
         )
-
-    from supabase import create_client
-
-    print("Using Supabase Cloud Storage.")
-    client = create_client(settings.SUPABASE_URL, settings.SUPABASE_SERVICE_ROLE_KEY)
-    return client.storage
 
 
 storage = get_storage_client()

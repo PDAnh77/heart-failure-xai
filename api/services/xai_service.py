@@ -20,7 +20,7 @@ from core.model_loader import get_pipeline
 from schemas.patient_schema import PatientPredict
 
 from services.plot_service import upload_plot
-from services.dataset_service import load_dataset, _sanitize, AVAILABLE_MODELS, SELECTED_MODEL
+from services.dataset_service import load_dataset, _sanitize, AVAILABLE_MODELS, DEFAULT_FEATURE_SELECTION_MODEL
 
 IMAGE_BUCKET = "heart-prediction-xai-reports"
 
@@ -221,7 +221,7 @@ def generate_lime_explanation(
         )
 
     # 3. Model Setup & Fast Retrain
-    final_model_name = model_name if (user["role"] == "admin" and model_name) else SELECTED_MODEL
+    final_model_name = model_name if model_name else DEFAULT_FEATURE_SELECTION_MODEL
     if final_model_name not in AVAILABLE_MODELS:
         final_model_name = "decision_tree"
 

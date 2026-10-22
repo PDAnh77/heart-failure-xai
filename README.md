@@ -2,16 +2,6 @@
 ## Overview
 A comprehensive AI-powered platform for heart failure analysis and risk prediction. Leverage machine learning models with Explainable AI (XAI) to generate accurate, transparent insights from patient data. Explore end-to-end data workflows including preprocessing, exploratory data analysis (EDA), and feature selection to support data-driven clinical research and decision-making.
 
-* Data preparation and model training for heart failure prediction
-
-* Explainable AI to interpret cardiovascular risk predictions
-
-* Backend API for authentication, patient management, heart failure inference, XAI explanations, prediction history management and dataset analysis
-
-* Frontend web application for patient data input and result visualization
-
-* CI/CD pipelines for automated build and deployment
-
 ## Features
 * **Heart Failure Risk Prediction**: Infer cardiovascular risk probability based on patient clinical features using trained ML models.
 
@@ -33,15 +23,11 @@ A comprehensive AI-powered platform for heart failure analysis and risk predicti
 
 * **Feature Selection**: Select optimal features using algorithms like Random Forest, XGBoost, and Decision Trees.
 
+* **Model Training & Evaluation**: Train machine learning models (Logistic Regression, Random Forest, Decision Tree, XGBoost, LightGBM, SVC, KNN) with performance evaluation (Accuracy, Precision, Recall, F1-Score, Cross-Validation).
+
 * **Patient & Prediction History**: Manage patient clinical profiles and track individual and batch prediction history over time.
 
-* **Web-based Frontend**: Interactive, responsive UI for clinical data input and result visualization.
-
-* **Dockerized Backend & CI/CD**: Ready for containerized deployment with automated build and deployment pipelines.
-
 ## Model & XAI Description
-* Model: Logistic Regression, Random Forest, XGBoost,...
-
 * Features used for prediction:
 
 | Feature | Type | Description |
@@ -116,23 +102,21 @@ The repository is organized as follows:
 
 ## Installation & Setup
 
-If running PostgreSQL locally with Docker, start the database with:
-```bash
-docker compose up -d
-```
+### 1. Database
+Set up a PostgreSQL database locally or create a project on [Supabase](https://supabase.com).
 
-### Backend (API)
-1. Navigate to the `api/` directory:
+### 2. Backend (API)
+1. Navigate to `api/`:
    ```bash
    cd api/
    ```
 
-2. Create and activate a virtual environment using Python 3.13:
+2. Create and activate virtual environment:
    ```bash
    python -m venv venv
-   # On Windows (PowerShell):
+   # Windows:
    venv\Scripts\Activate.ps1
-   # On Linux/macOS:
+   # Linux/macOS:
    source venv/bin/activate
    ```
 
@@ -141,26 +125,14 @@ docker compose up -d
    pip install -r requirements.txt
    ```
 
-4. Configure environment variables (see [Environment Variables](#environment-variables) below).
+4. Configure `.env` (see [Environment Variables](#environment-variables)).
 
-5. Run the API locally:
+5. Run the API:
    ```bash
    uvicorn main:app --reload
    ```
-   The API will automatically:
-   - Connect to the configured database and create tables if they do not exist.
-   - Load the AI model from local file or storage.
-   - Serve Swagger interactive API documentation (e.g., `http://localhost:8000/docs`).
 
-Or build and run via Docker:
-   ```bash
-   docker build -t heart-failure-api .
-   docker run -d -p 8000:8000 heart-failure-api
-   ```
-
-### Frontend (Web Application)
-Please refer to [web/README.md](web/README.md) for detailed instructions on setting up and running the frontend application.
-
+### 3. Frontend (Web)
 ```bash
 cd web/
 npm install
@@ -177,10 +149,10 @@ Create a `.env` file inside the `api/` directory:
 # Database: Local PostgreSQL or Supabase connection string
 DATABASE_URL=postgresql://your_username:your_password@localhost:5432/your_database_name
 
-# Storage: 'local' (saves files in api/storage/) or 'supabase'
-STORAGE_TYPE=local
+# File Storage: 'local' (saves files in api/storage/) or 'supabase'
+FILE_STORAGE_PROVIDER=local
 
-# Supabase Credentials (only required if STORAGE_TYPE=supabase)
+# Supabase Credentials (required if FILE_STORAGE_PROVIDER=supabase)
 SUPABASE_URL=
 SUPABASE_SERVICE_ROLE_KEY=
 
@@ -188,7 +160,6 @@ SUPABASE_SERVICE_ROLE_KEY=
 JWT_SECRET_KEY=your_secret_jwt_key
 API_URL=http://localhost:8000
 CLIENT_URL=http://localhost:3000
-FEATURE_SELECTION_MODEL=random_forest
 
 # Google OAuth (Optional)
 GOOGLE_CLIENT_ID=

@@ -1,5 +1,6 @@
 "use client";
-import { useState, ChangeEvent, DragEvent } from "react";
+import { useState, useEffect, ChangeEvent, DragEvent } from "react";
+import { getFeatureSelectionModelOptions, isLocalEnvironment } from "@/lib/env";
 import { useAuth } from "@/context/authcontext";
 import { useRouter } from "next/navigation";
 import { FaUpload } from "react-icons/fa6";
@@ -34,6 +35,12 @@ export default function Upload() {
     const [mutationRate, setMutationRate] = useState<number>(0.2);
     const [nParents, setNParents] = useState<number | "">("");
     const [testSize, setTestSize] = useState<number>(0.3);
+    const [modelName, setModelName] = useState<string>("decision_tree");
+    const [isLocal, setIsLocal] = useState<boolean>(false);
+
+    useEffect(() => {
+        setIsLocal(isLocalEnvironment());
+    }, []);
 
     const router = useRouter();
 
@@ -166,7 +173,8 @@ export default function Upload() {
             balancing: dataBalancing,
             size: size.toString(),
             mutation_rate: mutationRate.toString(),
-            test_size: testSize.toString()
+            test_size: testSize.toString(),
+            model: modelName
         });
 
         if (nParents !== "") queryParams.append("n_parents", nParents.toString());
@@ -368,6 +376,18 @@ export default function Upload() {
 
                                 {isFeatureSelectionOpen && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-2 animate-in fade-in duration-300">
+                                        <div className="md:col-span-2">
+                                            <label htmlFor="fs-model" className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                                                {t("configuration.featureSelection.model.label")}
+                                            </label>
+                                            <CustomSelect
+                                                id="fs-model"
+                                                value={modelName}
+                                                onChange={setModelName}
+                                                options={getFeatureSelectionModelOptions(isLocal)}
+                                            />
+                                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("configuration.featureSelection.model.desc")}</p>
+                                        </div>
                                         <div>
                                             <label htmlFor="size" className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
                                                 {t("configuration.featureSelection.size.label")}
