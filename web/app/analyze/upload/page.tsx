@@ -1,5 +1,6 @@
 "use client";
-import { useState, ChangeEvent, DragEvent } from "react";
+import { useState, useEffect, useRef, ChangeEvent, DragEvent } from "react";
+import { getFeatureSelectionModelOptions, isLocalEnvironment } from "@/lib/env";
 import { useAuth } from "@/context/authcontext";
 import { useRouter } from "next/navigation";
 import { FaUpload } from "react-icons/fa6";
@@ -7,6 +8,7 @@ import { FiFileText, FiChevronDown, FiChevronUp } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import toast from "react-hot-toast";
 import { api } from "@/lib/api";
+import CustomSelect from "@/components/ui/customSelect";
 import { useTranslations } from "next-intl";
 
 export default function Upload() {
@@ -15,6 +17,7 @@ export default function Upload() {
     // File states
     const [file, setFile] = useState<File | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Upload & Dataset states
     const [isUploading, setIsUploading] = useState(false);
@@ -33,6 +36,12 @@ export default function Upload() {
     const [mutationRate, setMutationRate] = useState<number>(0.2);
     const [nParents, setNParents] = useState<number | "">("");
     const [testSize, setTestSize] = useState<number>(0.3);
+    const [modelName, setModelName] = useState<string>("decision_tree");
+    const [isLocal, setIsLocal] = useState<boolean>(false);
+
+    useEffect(() => {
+        setIsLocal(isLocalEnvironment());
+    }, []);
 
     const router = useRouter();
 
@@ -50,7 +59,8 @@ export default function Upload() {
 
     const validateAndSetFile = (selectedFile: File | undefined) => {
         if (selectedFile) {
-            if (!selectedFile.name.endsWith('.csv')) {
+            const isSupported = selectedFile.name.toLowerCase().match(/\.(csv|xlsx|xls)$/);
+            if (!isSupported) {
                 toast.error(t("toast.invalidFile"));
                 return;
             }
@@ -65,6 +75,7 @@ export default function Upload() {
 
             setFile(selectedFile);
             resetDatasetData();
+            handleUpload(selectedFile);
         }
     };
 
@@ -80,6 +91,7 @@ export default function Upload() {
     const removeFile = () => {
         setFile(null);
         resetDatasetData();
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const resetDatasetData = () => {
@@ -91,8 +103,9 @@ export default function Upload() {
     };
 
     // Handle File Upload API
-    const handleUpload = async () => {
-        if (!file) return;
+    const handleUpload = async (fileToUpload?: File) => {
+        const targetFile = fileToUpload || file;
+        if (!targetFile) return;
 
         if (!user) {
             toast.error(t("toast.signInRequired"));
@@ -102,7 +115,7 @@ export default function Upload() {
 
         setIsUploading(true);
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", targetFile);
 
         try {
             const response = await api.post("/datasets/upload", formData, {
@@ -165,7 +178,8 @@ export default function Upload() {
             balancing: dataBalancing,
             size: size.toString(),
             mutation_rate: mutationRate.toString(),
-            test_size: testSize.toString()
+            test_size: testSize.toString(),
+            model: modelName
         });
 
         if (nParents !== "") queryParams.append("n_parents", nParents.toString());
@@ -184,7 +198,7 @@ export default function Upload() {
                 </p>
             </div>
 
-            <div className={`flex flex-col ${!datasetId ? "justify-center" : "justify-start"} align-middle h-full items-center flex-1 my-10`}>
+            <div className="flex flex-col justify-start items-center flex-1 mt-8 mb-10 w-full">
                 <div className="w-full max-w-2xl">
 
                     {/* Dropzone Area */}
@@ -211,9 +225,10 @@ export default function Upload() {
                                 </p>
                                 <input
                                     type="file"
-                                    accept=".csv"
+                                    accept=".csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                                     onChange={handleFileChange}
                                     disabled={isUploading}
+                                    ref={fileInputRef}
                                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                                 />
                                 <span className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-semibold shadow-sm pointer-events-none">
@@ -236,6 +251,9 @@ export default function Upload() {
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
+                                    {isUploading && (
+                                        <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    )}
                                     <button
                                         onClick={removeFile}
                                         disabled={isUploading}
@@ -248,21 +266,13 @@ export default function Upload() {
                         )}
                     </div>
 
-                    {/* Upload Button */}
-                    {file && !datasetId && (
+                    {/* Retry Upload Button if failed */}
+                    {file && !datasetId && !isUploading && (
                         <button
-                            onClick={handleUpload}
-                            disabled={isUploading}
-                            className="mt-6 w-full py-3 flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800 hover:cursor-pointer text-white font-bold rounded-lg transition-colors shadow-lg"
+                            onClick={() => handleUpload(file)}
+                            className="mt-6 w-full py-3 flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 hover:cursor-pointer text-white font-bold rounded-lg transition-colors shadow-lg"
                         >
-                            {isUploading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"></div>
-                                    {t("uploadBtn.uploading")}
-                                </>
-                            ) : (
-                                t("uploadBtn.upload")
-                            )}
+                            {t("uploadBtn.upload")}
                         </button>
                     )}
 
@@ -279,17 +289,13 @@ export default function Upload() {
                                 <label htmlFor="target-column" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                     {t("configuration.targetColumn.label")} <span className="text-red-500">*</span>
                                 </label>
-                                <select
+                                <CustomSelect
                                     id="target-column"
                                     value={selectedTarget}
-                                    onChange={(e) => setSelectedTarget(e.target.value)}
-                                    className={inputClass}
-                                >
-                                    <option value="" disabled>{t("configuration.targetColumn.placeholder")}</option>
-                                    {columns.map((col, index) => (
-                                        <option key={index} value={col}>{col}</option>
-                                    ))}
-                                </select>
+                                    placeholder={t("configuration.targetColumn.placeholder")}
+                                    onChange={setSelectedTarget}
+                                    options={columns.map((col) => ({ value: col, label: col }))}
+                                />
                                 <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">{t("configuration.targetColumn.desc")}</p>
                             </div>
 
@@ -313,27 +319,37 @@ export default function Upload() {
                                 {isPreprocessingOpen && (
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-2 animate-in fade-in duration-300">
                                         <div>
-                                            <label htmlFor="imputation" className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                            <label htmlFor="imputation" className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                                 {t("configuration.preprocessing.imputation.label")}
                                             </label>
-                                            <select id="imputation" value={imputationMethod} onChange={(e) => setImputationMethod(e.target.value)} className={inputClass}>
-                                                <option value="default">{t("configuration.preprocessing.imputation.default")}</option>
-                                                <option value="knn">{t("configuration.preprocessing.imputation.knn")}</option>
-                                                <option value="mice">{t("configuration.preprocessing.imputation.mice")}</option>
-                                                <option value="mean">{t("configuration.preprocessing.imputation.mean")}</option>
-                                            </select>
+                                            <CustomSelect
+                                                id="imputation"
+                                                value={imputationMethod}
+                                                onChange={setImputationMethod}
+                                                options={[
+                                                    { value: "default", label: t("configuration.preprocessing.imputation.default") },
+                                                    { value: "knn", label: t("configuration.preprocessing.imputation.knn") },
+                                                    { value: "mice", label: t("configuration.preprocessing.imputation.mice") },
+                                                    { value: "mean", label: t("configuration.preprocessing.imputation.mean") },
+                                                ]}
+                                            />
                                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("configuration.preprocessing.imputation.desc")}</p>
                                         </div>
 
                                         <div>
-                                            <label htmlFor="balancing" className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                            <label htmlFor="balancing" className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
                                                 {t("configuration.preprocessing.balancing.label")}
                                             </label>
-                                            <select id="balancing" value={dataBalancing} onChange={(e) => setDataBalancing(e.target.value)} className={inputClass}>
-                                                <option value="none">{t("configuration.preprocessing.balancing.none")}</option>
-                                                <option value="adasyn">{t("configuration.preprocessing.balancing.adasyn")}</option>
-                                                <option value="smote">{t("configuration.preprocessing.balancing.smote")}</option>
-                                            </select>
+                                            <CustomSelect
+                                                id="balancing"
+                                                value={dataBalancing}
+                                                onChange={setDataBalancing}
+                                                options={[
+                                                    { value: "none", label: t("configuration.preprocessing.balancing.none") },
+                                                    { value: "adasyn", label: t("configuration.preprocessing.balancing.adasyn") },
+                                                    { value: "smote", label: t("configuration.preprocessing.balancing.smote") },
+                                                ]}
+                                            />
                                             <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">
                                                 <strong>{t("configuration.preprocessing.balancing.note")}</strong> {t("configuration.preprocessing.balancing.desc")}
                                             </p>
@@ -360,7 +376,19 @@ export default function Upload() {
                                 </button>
 
                                 {isFeatureSelectionOpen && (
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6 mb-2 animate-in fade-in duration-300">
+                                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-6 mb-2">
+                                        <div className="sm:col-span-2 lg:col-span-3">
+                                            <label htmlFor="fs-model" className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                                                {t("configuration.featureSelection.model.label")}
+                                            </label>
+                                            <CustomSelect
+                                                id="fs-model"
+                                                value={modelName}
+                                                onChange={setModelName}
+                                                options={getFeatureSelectionModelOptions(isLocal)}
+                                            />
+                                            <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("configuration.featureSelection.model.desc")}</p>
+                                        </div>
                                         <div>
                                             <label htmlFor="size" className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
                                                 {t("configuration.featureSelection.size.label")}

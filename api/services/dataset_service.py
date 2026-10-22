@@ -18,7 +18,7 @@ from xgboost import XGBClassifier
 from lightgbm import LGBMClassifier
 
 DATASET_BUCKET = "heart-failure-datasets"
-SELECTED_MODEL = settings.FEATURE_SELECTION_MODEL
+DEFAULT_FEATURE_SELECTION_MODEL = "decision_tree"
 
 AVAILABLE_MODELS = {
     "svc": SVC(kernel="linear", C=0.1, probability=True),

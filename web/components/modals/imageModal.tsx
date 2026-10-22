@@ -2,6 +2,7 @@
 import { useEffect } from "react";
 import Image from "next/image";
 import { FiX, FiDownload } from "react-icons/fi";
+import { useTranslations } from "next-intl";
 
 interface ImageModalProps {
     imageUrl: string | null;
@@ -9,6 +10,7 @@ interface ImageModalProps {
 }
 
 export default function ImageModal({ imageUrl, onClose }: ImageModalProps) {
+    const t = useTranslations("imageModal");
     useEffect(() => {
         if (imageUrl) {
             document.body.style.overflow = "hidden";
@@ -72,8 +74,8 @@ export default function ImageModal({ imageUrl, onClose }: ImageModalProps) {
                     <button
                         className="hover:cursor-pointer text-gray-300 hover:text-white bg-gray-900/50 hover:bg-gray-900 p-2 rounded-full transition-colors"
                         onClick={handleDownload}
-                        title="Download Image"
-                        aria-label="Download Image"
+                        title={t("download")}
+                        aria-label={t("download")}
                     >
                         <FiDownload className="w-8 h-8" />
                     </button>
@@ -81,8 +83,8 @@ export default function ImageModal({ imageUrl, onClose }: ImageModalProps) {
                     <button
                         className="hover:cursor-pointer text-gray-300 hover:text-white bg-gray-900/50 hover:bg-gray-900 p-2 rounded-full transition-colors"
                         onClick={onClose}
-                        title="Close Modal"
-                        aria-label="Close Modal"
+                        title={t("close")}
+                        aria-label={t("close")}
                     >
                         <FiX className="w-8 h-8" />
                     </button>
@@ -91,7 +93,7 @@ export default function ImageModal({ imageUrl, onClose }: ImageModalProps) {
                 <div className="relative w-full max-w-6xl h-[85vh]">
                     <Image
                         src={imageUrl}
-                        alt="Expanded analysis chart"
+                        alt={t("alt")}
                         fill
                         sizes="100vw"
                         className="object-contain"

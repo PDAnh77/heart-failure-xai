@@ -4,10 +4,10 @@ scikit-learn==1.7.2
 joblib==1.5.2
 fastapi==0.138.1
 uvicorn==0.34.0
-python-multipart
+python-multipart==0.0.32
 python-dotenv==1.2.2
 supabase==2.23.2
-pwdlib[argon2]
+pwdlib[argon2]==0.3.1
 shap==0.48.0
 lime==0.2.0.1
 xgboost==3.0.5
@@ -16,9 +16,10 @@ pydantic-settings==2.12.0
 google-auth==2.45.0
 authlib==1.7.1
 itsdangerous==2.2.0
-sqlalchemy
-psycopg2-binary
+sqlalchemy==2.0.54
+alembic==1.20.0
+psycopg2-binary==2.9.13
 seaborn==0.13.2
 lightgbm==4.6.0
-openpyxl
+openpyxl==3.1.5
 imbalanced-learn==0.14.1

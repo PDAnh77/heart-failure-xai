@@ -5,11 +5,22 @@ const withNextIntl = createNextIntlPlugin("./app/i18n/request.ts");
 
 const nextConfig: NextConfig = {
   images: {
+    dangerouslyAllowLocalIP: true,
     remotePatterns: [
       {
         protocol: "https",
         hostname: "intxcdryjgivfdkgdgef.supabase.co",
         pathname: "/storage/v1/object/**",
+      },
+      {
+        protocol: "http",
+        hostname: "localhost",
+        pathname: "/storage/**",
+      },
+      {
+        protocol: "http",
+        hostname: "127.0.0.1",
+        pathname: "/storage/**",
       },
     ],
   },
@@ -18,6 +29,10 @@ const nextConfig: NextConfig = {
       {
         source: "/api/:path*",
         destination: `${process.env.API_URL}/api/:path*`,
+      },
+      {
+        source: "/storage/:path*",
+        destination: `${process.env.API_URL}/storage/:path*`,
       },
     ];
   },

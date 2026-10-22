@@ -2,8 +2,9 @@
 import SettingRow from "@/components/settings/settingRow";
 import { useSettings } from "@/context/settingscontext";
 import { useTheme } from "next-themes";
-import { IoMdClose, IoIosArrowDown, IoIosArrowUp } from "react-icons/io";
-import { useEffect, useRef, useState } from "react";
+import { IoMdClose } from "react-icons/io";
+import { useEffect, useState } from "react";
+import CustomSelect from "@/components/ui/customSelect";
 import { useTranslations } from "next-intl";
 
 interface SettingsModalProps {
@@ -13,8 +14,6 @@ interface SettingsModalProps {
 
 export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     const [isVisible, setIsVisible] = useState(false);
-    const [langOpen, setLangOpen] = useState(false);
-    const langRef = useRef<HTMLDivElement>(null);
 
     const {
         savePrediction,
@@ -36,7 +35,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
             return () => clearTimeout(timer);
         } else {
             setIsVisible(false);
-            setLangOpen(false); // Đóng dropdown khi modal đóng
         }
     }, [isOpen]);
 
@@ -56,11 +54,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
     useEffect(() => {
         const handleKeyDown = (event: KeyboardEvent) => {
             if (event.key === "Escape") {
-                if (langOpen) {
-                    setLangOpen(false); // Ưu tiên đóng dropdown trước
-                } else {
-                    onClose();
-                }
+                onClose();
             }
         };
         if (isOpen) {
@@ -69,22 +63,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         return () => {
             document.removeEventListener("keydown", handleKeyDown);
         };
-    }, [isOpen, onClose, langOpen]);
-
-    // Đóng dropdown ngôn ngữ khi click ra ngoài
-    useEffect(() => {
-        const handleClickOutside = (event: MouseEvent) => {
-            if (langRef.current && !langRef.current.contains(event.target as Node)) {
-                setLangOpen(false);
-            }
-        };
-        if (langOpen) {
-            document.addEventListener("mousedown", handleClickOutside);
-        }
-        return () => {
-            document.removeEventListener("mousedown", handleClickOutside);
-        };
-    }, [langOpen]);
+    }, [isOpen, onClose]);
 
     if (!isOpen) return null;
 
@@ -92,9 +71,6 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
         { value: "vi", label: t("languageVi") },
         { value: "en", label: t("languageEn") },
     ];
-
-    const currentLanguageLabel =
-        languageOptions.find((o) => o.value === language)?.label ?? language;
 
     return (
         <div className="relative z-50" aria-labelledby="modal-title" role="dialog">
@@ -145,7 +121,7 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                     setEnabled={(value) => setTheme(value ? "dark" : "light")}
                                 />
 
-                                {/* Language — Custom Dropdown */}
+                                {/* Language — Custom Select */}
                                 <div className="flex items-center justify-between py-4">
                                     <div className="flex flex-col pr-4">
                                         <span className="text-base font-medium text-gray-900 dark:text-white">
@@ -153,49 +129,14 @@ export default function SettingsModal({ isOpen, onClose }: SettingsModalProps) {
                                         </span>
                                     </div>
 
-                                    <div className="relative w-40 shrink-0" ref={langRef}>
-                                        {/* Trigger Button */}
-                                        <button
-                                            type="button"
+                                    <div className="w-40 shrink-0">
+                                        <CustomSelect
+                                            id="language-select"
+                                            value={language}
                                             disabled={!isReady}
-                                            onClick={() => setLangOpen((prev) => !prev)}
-                                            className="w-full flex items-center justify-between rounded-md bg-white px-3 py-2 text-sm text-gray-900 shadow-sm ring-1 ring-gray-300 hover:ring-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 disabled:cursor-not-allowed disabled:opacity-60 dark:bg-gray-900 dark:text-gray-100 dark:ring-gray-600 dark:hover:ring-gray-500 transition-all"
-                                            aria-haspopup="listbox"
-                                            aria-expanded={langOpen}
-                                        >
-                                            <span>{currentLanguageLabel}</span>
-                                            {langOpen
-                                                ? <IoIosArrowUp className="w-4 h-4 ml-2 text-gray-500 dark:text-gray-400" />
-                                                : <IoIosArrowDown className="w-4 h-4 ml-2 text-gray-500 dark:text-gray-400" />
-                                            }
-                                        </button>
-
-                                        {/* Dropdown List — absolute, luôn hiển thị đúng vị trí */}
-                                        {langOpen && (
-                                            <ul
-                                                role="listbox"
-                                                className="absolute z-9999 mt-1 w-full rounded-md bg-white shadow-lg ring-1 ring-black/10 dark:bg-gray-800 dark:ring-gray-600 overflow-hidden"
-                                            >
-                                                {languageOptions.map((option) => (
-                                                    <li
-                                                        key={option.value}
-                                                        role="option"
-                                                        aria-selected={language === option.value}
-                                                        onClick={() => {
-                                                            setLanguage(option.value);
-                                                            setLangOpen(false);
-                                                        }}
-                                                        className={`cursor-pointer px-3 py-2 text-sm select-none transition-colors
-                                                            ${language === option.value
-                                                                ? "bg-blue-50 text-blue-600 font-semibold dark:bg-blue-900/40 dark:text-blue-400"
-                                                                : "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700"
-                                                            }`}
-                                                    >
-                                                        {option.label}
-                                                    </li>
-                                                ))}
-                                            </ul>
-                                        )}
+                                            onChange={(val) => setLanguage(val as "vi" | "en")}
+                                            options={languageOptions}
+                                        />
                                     </div>
                                 </div>
 

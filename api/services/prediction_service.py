@@ -224,17 +224,11 @@ def predict_batch(patients: List[PatientPredict]):
     }
 
 
-def predict_dataframe(db: Session, dataset_id: str, user_id: str, target_column: str):
+def predict_dataframe(db: Session, dataset_id: str, user_id: str):
     try:
         df = load_dataset(dataset_id, user_id)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unable to load dataset: {str(e)}")
-
-    if target_column and target_column not in df.columns:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Target column '{target_column}' not found. Available columns: {list(df.columns)}",
-        )
 
     # Keep a copy of the original dataframe to preserve user's extra columns
     original_df = df.copy()
@@ -280,9 +274,9 @@ def predict_dataframe(db: Session, dataset_id: str, user_id: str, target_column:
     predictions_list = [item["prediction"] for item in batch_result["predictions"]]
     probabilities_list = [item["probability"] for item in batch_result["predictions"]]
 
-    # Append to the original dataframe
-    result_col_name = target_column if target_column else "prediction_result"
-    prob_col_name = f"{result_col_name}_prediction_probability" if target_column else "prediction_probability"
+    # Ghi kết quả dự đoán vào 2 cột mới trong file kết quả
+    result_col_name = "prediction_result"
+    prob_col_name = "prediction_probability"
 
     original_df[result_col_name] = predictions_list
     original_df[prob_col_name] = probabilities_list
@@ -311,7 +305,6 @@ def predict_dataframe(db: Session, dataset_id: str, user_id: str, target_column:
             user_id=check_uuid(user_id),
             source_dataset_id=dataset_id,
             result_dataset_id=pred_dataset_id,
-            target_column=target_column,
             summary=batch_result["summary"],
             batch_xai=batch_xai_data,
         )
@@ -325,7 +318,6 @@ def predict_dataframe(db: Session, dataset_id: str, user_id: str, target_column:
     batch_result.pop("predictions", None)
 
     batch_result["file_id"] = pred_dataset_id
-    batch_result["target_column"] = target_column
     batch_result["batch_prediction_id"] = new_row.id
     batch_result["created_at"] = new_row.created_at
     return batch_result

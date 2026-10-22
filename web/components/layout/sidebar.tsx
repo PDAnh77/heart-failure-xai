@@ -140,7 +140,11 @@ export default function Sidebar() {
     };
 
     const itemClass = (active: boolean) =>
-        `rounded-xl transition ${active ? "bg-gray-100 font-semibold text-sm dark:text-white dark:bg-white/10" : "hover:bg-gray-100 text-sm dark:hover:bg-white/10"}`;
+        `rounded-xl select-none transition-colors duration-75 transform-gpu [backface-visibility:hidden] ${
+            active 
+                ? "bg-gray-100 font-semibold text-sm text-gray-900 dark:text-white dark:bg-white/10" 
+                : "bg-transparent text-gray-700 hover:text-gray-900 dark:text-gray-300 dark:hover:text-white hover:bg-gray-100 text-sm dark:hover:bg-white/10"
+        }`;
 
     const loadMoreItems = async () => {
         if (!hasMore || loadingMore) return;
@@ -209,41 +213,41 @@ export default function Sidebar() {
             <aside className={`
                 fixed inset-y-0 left-0 z-50 lg:z-40 w-72 p-2 transition-transform duration-300 ease-in-out bg-gray-50 dark:bg-[#141516] lg:bg-transparent lg:dark:bg-transparent
                 ${open ? "translate-x-0" : "-translate-x-full"} 
-                lg:static lg:translate-x-0 lg:min-h-screen
+                lg:static lg:translate-x-0 lg:min-h-screen lg:h-full
             `}>
                 <div
-                    className="bg-gray-50 rounded-xl h-full lg:border lg:border-gray-200 lg:shadow-md dark:bg-[#18181B] dark:border-[#FFFFFF1A] flex flex-col overflow-y-auto relative overscroll-none"
+                    className="bg-gray-50 rounded-xl h-full lg:border lg:border-gray-200 lg:shadow-md dark:bg-[#18181B] dark:border-[#FFFFFF1A] flex flex-col overflow-y-auto overflow-x-hidden relative overscroll-contain transform-gpu backface-hidden"
                     onScroll={handleScroll}
                 >
 
                     {/* MENU TRÊN */}
-                    <div className="p-2 space-y-2 sticky top-0 z-10 bg-gray-50 dark:bg-[#18181B]">
+                    <div className="p-2 space-y-2 sticky top-0 z-10 bg-gray-50 dark:bg-[#18181B] transform-gpu backface-hidden">
                         <div className="flex gap-1 p-2 my-4">
                             <PiHeartbeatFill className="text-xl text-red-500" />
                             <p className="font-bold text-sm">{tCommon("appName")}</p>
                         </div>
-                        <ul className="space-y-2">
+                        <ul className="space-y-1">
                             <li className={itemClass(pathname === "/")} onClick={() => setOpen(false)}>
-                                <Link href="/" className="flex gap-2 p-2">
-                                    <FiHome className="text-lg" />
+                                <Link href="/" className="flex items-center gap-2.5 px-3 py-2 leading-5 min-h-10 w-full">
+                                    <FiHome className="text-lg shrink-0" />
                                     <span>{t("home")}</span>
                                 </Link>
                             </li>
-                            <li className={itemClass(pathname.startsWith("/predict"))} onClick={() => setOpen(false)}>
-                                <Link href="/predict?type=individual" className="flex gap-2 p-2">
-                                    <LuUserSearch className="text-lg" />
+                            <li className={itemClass(pathname === "/predict" || pathname.startsWith("/predict/"))} onClick={() => setOpen(false)}>
+                                <Link href="/predict?type=individual" className="flex items-center gap-2.5 px-3 py-2 leading-5 min-h-10 w-full">
+                                    <LuUserSearch className="text-lg shrink-0" />
                                     <span>{t("predict")}</span>
                                 </Link>
                             </li>
-                            <li className={itemClass(pathname.startsWith("/analyze"))} onClick={() => setOpen(false)}>
-                                <Link href="/analyze/upload" className="flex gap-2 p-2">
-                                    <MdInsertChartOutlined className="text-lg" />
+                            <li className={itemClass(pathname === "/analyze" || pathname.startsWith("/analyze/"))} onClick={() => setOpen(false)}>
+                                <Link href="/analyze/upload" className="flex items-center gap-2.5 px-3 py-2 leading-5 min-h-10 w-full">
+                                    <MdInsertChartOutlined className="text-lg shrink-0" />
                                     <span>{t("analyze")}</span>
                                 </Link>
                             </li>
-                            <li className={itemClass(pathname.startsWith("/train"))} onClick={() => setOpen(false)}>
-                                <Link href="/train" className="flex gap-2 p-2">
-                                    <LuBrainCircuit className="text-lg" />
+                            <li className={itemClass(pathname === "/train" || pathname.startsWith("/train/"))} onClick={() => setOpen(false)}>
+                                <Link href="/train" className="flex items-center gap-2.5 px-3 py-2 leading-5 min-h-10 w-full">
+                                    <LuBrainCircuit className="text-lg shrink-0" />
                                     <span>{t("train")}</span>
                                 </Link>
                             </li>
@@ -274,32 +278,32 @@ export default function Sidebar() {
                                         return (
                                             <li
                                                 key={item.id}
-                                                className={`${itemClass(isActive)} group relative flex items-center justify-between`}
+                                                className={`${itemClass(isActive)} group relative flex items-center justify-between min-h-10 w-full`}
                                                 onClick={() => setOpen(false)}
                                             >
                                                 <Link
                                                     href={itemUrl}
-                                                    className="flex items-center p-2 gap-2 grow min-w-0"
+                                                    className="flex items-center px-3 py-2 gap-2.5 grow min-w-0 leading-5"
                                                 >
                                                     {isBatch ? (
-                                                        <LuUsers className="text-gray-400 shrink-0" />
+                                                        <LuUsers className="text-gray-400 shrink-0 text-base" />
                                                     ) : (
-                                                        <LuUser className="text-gray-400 shrink-0" />
+                                                        <LuUser className="text-gray-400 shrink-0 text-base" />
                                                     )}
                                                     <div className="flex flex-col min-w-0">
-                                                        <span className="truncate">{formatDateTime(item.created_at.toString())}</span>
+                                                        <span className="truncate leading-5">{formatDateTime(item.created_at.toString())}</span>
                                                     </div>
                                                 </Link>
 
                                                 <div
-                                                    className="p-2 rounded-full mr-2 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity hover:bg-red-100 dark:hover:bg-red-800/30 cursor-pointer"
+                                                    className="p-1.5 rounded-lg mr-1.5 opacity-0 pointer-events-none group-hover:opacity-100 group-hover:pointer-events-auto transition-opacity duration-75 hover:bg-red-100 dark:hover:bg-red-800/30 cursor-pointer shrink-0"
                                                     onClick={(e) => {
                                                         e.preventDefault();
                                                         e.stopPropagation();
                                                         setDeleteItem(item);
                                                     }}
                                                 >
-                                                    <FaRegTrashCan className="text-red-500" />
+                                                    <FaRegTrashCan className="text-red-500 text-sm" />
                                                 </div>
                                             </li>
                                         );
@@ -316,17 +320,17 @@ export default function Sidebar() {
                     </div>
 
                     {/* USER MENU */}
-                    <div className="p-2 border-t border-gray-200 dark:border-[#FFFFFF1A] sticky bottom-0 z-20 bg-gray-50 dark:bg-[#18181B]" ref={dropdownRef}>
+                    <div className="p-2 border-t border-gray-200 dark:border-[#FFFFFF1A] sticky bottom-0 z-20 bg-gray-50 dark:bg-[#18181B] transform-gpu backface-hidden" ref={dropdownRef}>
 
                         {/* THE DROPDOWN MENU */}
                         {userMenuOpen && (
-                            <div className="absolute bottom-full left-2 right-2 mb-2 bg-white dark:bg-[#1A1A1B] border border-gray-200 dark:border-[#FFFFFF1A] rounded-2xl shadow-2xl overflow-hidden z-60 animate-in fade-in slide-in-from-bottom-2 duration-200">
-                                <ul className="p-1">
+                            <div className="absolute bottom-full left-2 right-2 mb-2 bg-white dark:bg-[#1A1A1B] border border-gray-200 dark:border-[#FFFFFF1A] rounded-2xl shadow-2xl overflow-hidden z-60 transform-gpu backface-hidden">
+                                <ul className="p-1 space-y-0.5">
                                     {user && (
                                         <>
                                             <li>
                                                 <button
-                                                    className="flex items-center transition w-full cursor-pointer gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 text-sm"
+                                                    className="flex items-center transition-colors duration-75 w-full cursor-pointer gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 text-sm leading-5"
                                                     onClick={() => {
                                                         setUserMenuOpen(false);
                                                         setShowProfileModal(true);
@@ -343,7 +347,7 @@ export default function Sidebar() {
 
                                     <li>
                                         <button
-                                            className="flex items-center transition w-full cursor-pointer gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 text-sm"
+                                            className="flex items-center transition-colors duration-75 w-full cursor-pointer gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 text-sm leading-5"
                                             onClick={() => { setUserMenuOpen(false); setShowSettingModal(true); }}>
                                             <LuSettings className="text-lg" />
                                             <span>{tCommon("settings")}</span>
@@ -354,7 +358,7 @@ export default function Sidebar() {
 
                                     {user ? (
                                         <li onClick={handleLogoutClick}>
-                                            <div className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition text-sm cursor-pointer">
+                                            <div className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-75 text-sm leading-5 cursor-pointer">
                                                 <LuLogOut className="text-lg" />
                                                 <span>{tCommon("logout")}</span>
                                             </div>
@@ -362,7 +366,7 @@ export default function Sidebar() {
                                     ) : (
                                         <li>
                                             <Link href="/login"
-                                                className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition text-sm"
+                                                className="flex items-center gap-2 p-2 rounded-xl hover:bg-gray-100 dark:hover:bg-white/10 transition-colors duration-75 text-sm leading-5"
                                                 onClick={() => { setUserMenuOpen(false); setOpen(false); }}>
                                                 <LuLogIn className="text-lg" />
                                                 <span>{tCommon("signIn")}</span>
@@ -375,7 +379,7 @@ export default function Sidebar() {
 
                         {/* TRIGGER BUTTON */}
                         <div
-                            className={`flex items-center gap-2 p-2 rounded-xl transition cursor-pointer ${userMenuOpen ? 'bg-gray-100 dark:bg-white/10' : 'hover:bg-gray-100 dark:hover:bg-white/10'}`}
+                            className={`flex items-center gap-2.5 px-3 py-2 rounded-xl transition-colors duration-75 cursor-pointer select-none min-h-12 transform-gpu backface-hidden ${userMenuOpen ? 'bg-gray-100 dark:bg-white/10' : 'bg-transparent hover:bg-gray-100 dark:hover:bg-white/10'}`}
                             onClick={() => setUserMenuOpen(!userMenuOpen)}
                         >
                             <div className="w-8 h-8 rounded-xl bg-indigo-600 flex items-center justify-center text-white shrink-0 shadow-lg shadow-indigo-500/20 overflow-hidden">

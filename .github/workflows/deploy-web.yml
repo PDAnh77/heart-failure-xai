@@ -15,7 +15,7 @@ permissions:
 jobs:
   scan_fs:
     name: Trivy Security Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -48,7 +48,7 @@ jobs:
 
   deploy_web:
     name: Deploy Web
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: scan_fs
     if: github.ref == 'refs/heads/main'
     steps:

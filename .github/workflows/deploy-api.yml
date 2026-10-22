@@ -21,7 +21,7 @@ permissions:
 jobs:
   build_image:
     name: Build Docker Image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -41,7 +41,7 @@ jobs:
   
   scan_image:
     name: Trivy Security Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build_image
     steps:
       - name: Download image artifact
@@ -81,7 +81,7 @@ jobs:
 
   push_image:
     name: Push Image & Deploy API
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: scan_image
     if: github.ref == 'refs/heads/main'
     steps:
