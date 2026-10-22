@@ -43,7 +43,7 @@ export default function PredictBatchTab() {
 
     const validateAndSetFile = (selectedFile: File | undefined) => {
         if (selectedFile) {
-            if (!selectedFile.name.endsWith('.csv') && !selectedFile.name.match(/\.xlsx?$/)) {
+            if (!selectedFile.name.toLowerCase().match(/\.(csv|xlsx|xls)$/)) {
                 toast.error(t("toast.invalidFile"));
                 return;
             }
@@ -190,7 +190,7 @@ export default function PredictBatchTab() {
                 </div>
             </div>
 
-            <div className={`flex flex-col ${!datasetId ? "justify-center" : "justify-start"} align-middle h-full items-center flex-1 mt-10`}>
+            <div className="flex flex-col justify-start items-center flex-1 mt-8 mb-10 w-full">
                 <div className="w-full max-w-2xl">
                     {/* Dropzone Area */}
                     <div
@@ -216,7 +216,7 @@ export default function PredictBatchTab() {
                                 </p>
                                 <input
                                     type="file"
-                                    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                                    accept=".csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel" 
                                     onChange={handleFileChange}
                                     disabled={isUploading || isPredicting}
                                     ref={fileInputRef}
@@ -227,10 +227,10 @@ export default function PredictBatchTab() {
                                 </span>
                             </>
                         ) : (
-                            <div className="w-full flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg border border-indigo-200 dark:border-indigo-900/50 shadow-sm">
+                            <div className="w-full flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg border border-green-200 dark:border-green-900/50 shadow-sm">
                                 <div className="flex items-center space-x-4">
-                                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                                        <FiFileText className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                                        <FiFileText className="w-6 h-6 text-green-600 dark:text-green-400" />
                                     </div>
                                     <div className="overflow-hidden">
                                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[200px] sm:max-w-[400px]">
@@ -242,6 +242,9 @@ export default function PredictBatchTab() {
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
+                                    {isUploading && (
+                                        <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={removeFile}

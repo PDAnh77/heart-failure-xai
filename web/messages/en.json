@@ -247,7 +247,7 @@
     "dropzone": {
       "dragDrop": "Drag and drop your file here",
       "formatLimit": "CSV or Excel (Max: 10MB)",
-      "chooseFile": "Choose file"
+      "chooseFile": "Choose .CSV or .XLSX"
     },
     "uploadBtn": {
       "uploading": "Loading...",
@@ -418,8 +418,8 @@
     "subtitle": "Upload your dataset to generate insights and identify the most important features",
     "dropzone": {
       "dragDrop": "Drag and drop your dataset here",
-      "clickUpload": "Or click to upload from your computer",
-      "chooseFile": "Choose .CSV File"
+      "clickUpload": "CSV or Excel (Max: 10MB)",
+      "chooseFile": "Choose .CSV or .XLSX"
     },
     "uploadBtn": {
       "uploading": "Uploading...",
@@ -495,7 +495,7 @@
     "subtitle": "Upload your preprocessed dataset, select a model to train",
     "dropzone": {
       "dragDrop": "Drag and drop your dataset here",
-      "clickUpload": "Or click to select a file",
+      "clickUpload": "CSV or Excel (Max: 10MB)",
       "chooseFile": "Choose .CSV or .XLSX"
     },
     "configuration": {
@@ -531,7 +531,7 @@
     },
     "toast": {
       "invalidFile": "Please select a valid CSV or Excel file.",
-      "fileTooLarge": "File size exceeds 10MB.",
+      "fileTooLarge": "File size exceeds the 10MB limit.",
       "targetRequired": "Please enter the target column name.",
       "trainError": "An error occurred during training.",
       "trainSuccess": "Model trained successfully!"

@@ -76,7 +76,8 @@ export default function CustomSelect({
         if (!open && containerRef.current) {
             const rect = containerRef.current.getBoundingClientRect();
             const spaceBelow = window.innerHeight - rect.bottom;
-            setDropUp(spaceBelow < 220);
+            const spaceAbove = rect.top;
+            setDropUp(spaceBelow < 260 && spaceAbove > spaceBelow);
         }
         setOpen((prev) => !prev);
     };
@@ -84,13 +85,13 @@ export default function CustomSelect({
     const selectedOption = options.find((o) => o.value === selected);
     const selectedLabel = selectedOption?.label;
 
-    const baseClass = `flex items-center justify-between w-full h-12 rounded-xl px-4 text-base outline-none transition select-none ${
+    const baseClass = `flex items-center justify-between w-full h-12 rounded-xl px-4 text-base outline-none transition-colors duration-150 select-none transform-gpu backface-hidden ${
         disabled ? "opacity-60 cursor-not-allowed" : "cursor-pointer"
     }`;
 
     const stateClass = isInvalid
         ? `bg-red-50 text-red-800 border border-red-500 dark:bg-red-900/20 dark:text-red-200`
-        : `bg-gray-100 text-gray-900 border border-transparent dark:bg-gray-800 dark:text-white hover:bg-gray-200/70 dark:hover:bg-gray-700/60`;
+        : `bg-gray-50 text-gray-900 border border-gray-300 dark:bg-gray-900/70 dark:text-white dark:border-gray-600 hover:bg-gray-100 dark:hover:bg-gray-800/90 hover:border-gray-400 dark:hover:border-gray-500`;
 
     return (
         <div className={`relative ${className}`} ref={containerRef}>
@@ -103,7 +104,7 @@ export default function CustomSelect({
                 id={id}
                 disabled={disabled}
                 onClick={toggleOpen}
-                className={`${baseClass} ${stateClass} focus:ring-2 focus:ring-indigo-500 focus:bg-white dark:focus:bg-gray-900 shadow-xs`}
+                className={`${baseClass} ${stateClass} focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 dark:focus:border-indigo-500 shadow-xs`}
                 aria-haspopup="listbox"
                 aria-expanded={open}
             >
@@ -120,7 +121,7 @@ export default function CustomSelect({
             {open && (
                 <ul
                     role="listbox"
-                    className={`absolute z-40 w-full rounded-xl bg-white shadow-xl ring-1 ring-black/10 dark:bg-gray-800 dark:ring-gray-700 p-1 space-y-0.5 overflow-y-auto overflow-x-hidden max-h-60 overscroll-contain transform-gpu backface-hidden ${
+                    className={`absolute z-40 w-full rounded-xl bg-white shadow-xl ring-1 ring-black/10 dark:bg-gray-800 dark:ring-1 dark:ring-gray-700 dark:border dark:border-gray-700 p-1 space-y-0.5 overflow-y-auto overflow-x-hidden max-h-60 overscroll-contain transform-gpu backface-hidden ${
                         dropUp ? "bottom-full mb-1.5 origin-bottom" : "top-full mt-1.5 origin-top"
                     }`}
                 >

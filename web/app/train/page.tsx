@@ -1,5 +1,5 @@
 "use client";
-import { useState, ChangeEvent, DragEvent } from "react";
+import { useState, useRef, ChangeEvent, DragEvent } from "react";
 import { useAuth } from "@/context/authcontext";
 import { FaUpload, FaDownload, FaBullseye, FaChartBar, FaArrowsRotate, FaMedal, FaShieldHalved } from "react-icons/fa6";
 import { FiFileText, FiRefreshCcw } from "react-icons/fi";
@@ -15,6 +15,7 @@ export default function TrainModel() {
     const [file, setFile] = useState<File | null>(null);
     const [datasetId, setDatasetId] = useState<string | null>(null);
     const [isDragging, setIsDragging] = useState(false);
+    const fileInputRef = useRef<HTMLInputElement>(null);
 
     // Form states
     const [columns, setColumns] = useState<string[]>([]);
@@ -53,7 +54,8 @@ export default function TrainModel() {
 
     const validateAndSetFile = (selectedFile: File | undefined) => {
         if (selectedFile) {
-            if (!selectedFile.name.endsWith('.csv') && !selectedFile.name.endsWith('.xlsx') && !selectedFile.name.endsWith('.xls')) {
+            const isSupported = selectedFile.name.toLowerCase().match(/\.(csv|xlsx|xls)$/);
+            if (!isSupported) {
                 toast.error(t("toast.invalidFile"));
                 return;
             }
@@ -109,6 +111,7 @@ export default function TrainModel() {
         setResult(null);
         setColumns([]);
         setTargetColumn("");
+        if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
     const handleTrain = async () => {
@@ -169,7 +172,7 @@ export default function TrainModel() {
                 </p>
             </div>
 
-            <div className={`flex flex-col ${!result ? "justify-center" : "justify-start"} align-middle items-center flex-1 my-10 w-full`}>
+            <div className="flex flex-col justify-start items-center flex-1 mt-8 mb-10 w-full">
                 <div className="w-full max-w-2xl">
 
                     {/* Dropzone Area */}
@@ -198,9 +201,10 @@ export default function TrainModel() {
                                         </p>
                                         <input
                                             type="file"
-                                            accept=".csv,.xlsx,.xls"
+                                            accept=".csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                                             onChange={handleFileChange}
-                                            disabled={isTraining}
+                                            disabled={isTraining || isLoadingColumns}
+                                            ref={fileInputRef}
                                             className="absolute inset-0 w-full h-full opacity-0 cursor-pointer disabled:cursor-not-allowed"
                                         />
                                         <span className="px-4 py-2 bg-white dark:bg-gray-700 border border-gray-300 dark:border-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-sm font-semibold shadow-sm pointer-events-none">
@@ -214,7 +218,7 @@ export default function TrainModel() {
                                                 <FiFileText className="w-6 h-6 text-green-600 dark:text-green-400" />
                                             </div>
                                             <div className="overflow-hidden">
-                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200">
+                                                <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[200px] sm:max-w-[300px]">
                                                     {file.name}
                                                 </p>
                                                 <p className="text-xs text-gray-500 dark:text-gray-400">
@@ -223,9 +227,12 @@ export default function TrainModel() {
                                             </div>
                                         </div>
                                         <div className="flex items-center space-x-2">
+                                            {isLoadingColumns && (
+                                                <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                            )}
                                             <button
                                                 onClick={removeFile}
-                                                disabled={isTraining}
+                                                disabled={isTraining || isLoadingColumns}
                                                 className="p-2 hover:bg-gray-100 dark:hover:bg-gray-700 rounded-full transition-colors hover:cursor-pointer disabled:opacity-50"
                                             >
                                                 <IoMdClose className="w-5 h-5 text-red-500" />

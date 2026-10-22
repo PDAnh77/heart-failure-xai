@@ -247,7 +247,7 @@
     "dropzone": {
       "dragDrop": "Kéo thả tệp của bạn vào đây",
       "formatLimit": "CSV hoặc Excel (Tối đa: 10MB)",
-      "chooseFile": "Chọn tệp"
+      "chooseFile": "Chọn .CSV hoặc .XLSX"
     },
     "uploadBtn": {
       "uploading": "Đang tải...",
@@ -418,8 +418,8 @@
     "subtitle": "Tải tập dữ liệu của bạn lên để quan sát thông tin chi tiết và xác định các đặc trưng quan trọng nhất",
     "dropzone": {
       "dragDrop": "Kéo thả tập dữ liệu của bạn vào đây",
-      "clickUpload": "Hoặc nhấp để tải lên từ máy tính",
-      "chooseFile": "Chọn tệp .CSV"
+      "clickUpload": "CSV hoặc Excel (Tối đa: 10MB)",
+      "chooseFile": "Chọn .CSV hoặc .XLSX"
     },
     "uploadBtn": {
       "uploading": "Đang tải lên...",
@@ -495,7 +495,7 @@
     "subtitle": "Tải lên tập dữ liệu đã tiền xử lý, chọn mô hình để huấn luyện",
     "dropzone": {
       "dragDrop": "Kéo thả tập dữ liệu của bạn vào đây",
-      "clickUpload": "Hoặc nhấp để chọn tệp",
+      "clickUpload": "CSV hoặc Excel (Tối đa: 10MB)",
       "chooseFile": "Chọn .CSV hoặc .XLSX"
     },
     "configuration": {
@@ -531,7 +531,7 @@
     },
     "toast": {
       "invalidFile": "Vui lòng chọn tệp CSV hoặc Excel hợp lệ.",
-      "fileTooLarge": "Kích thước tệp vượt quá 10MB.",
+      "fileTooLarge": "Kích thước tệp vượt quá giới hạn 10MB.",
       "targetRequired": "Vui lòng nhập tên cột mục tiêu.",
       "trainError": "Đã xảy ra lỗi trong quá trình huấn luyện.",
       "trainSuccess": "Huấn luyện mô hình thành công!"
