@@ -120,8 +120,8 @@ export default function CustomSelect({
             {open && (
                 <ul
                     role="listbox"
-                    className={`absolute z-40 w-full rounded-xl bg-white shadow-xl ring-1 ring-black/10 dark:bg-gray-800 dark:ring-gray-700 p-1 overflow-y-auto max-h-60 animate-in fade-in duration-150 ${
-                        dropUp ? "bottom-full mb-1.5" : "top-full mt-1.5"
+                    className={`absolute z-40 w-full rounded-xl bg-white shadow-xl ring-1 ring-black/10 dark:bg-gray-800 dark:ring-gray-700 p-1 space-y-0.5 overflow-y-auto overflow-x-hidden max-h-60 overscroll-contain transform-gpu backface-hidden ${
+                        dropUp ? "bottom-full mb-1.5 origin-bottom" : "top-full mt-1.5 origin-top"
                     }`}
                 >
                     {options.map((option) => {
@@ -137,15 +137,15 @@ export default function CustomSelect({
                                     onChange?.(option.value);
                                     setOpen(false);
                                 }}
-                                className={`flex items-center justify-between rounded-lg px-3 py-2.5 text-sm transition-colors select-none ${
+                                className={`flex items-center justify-between min-h-10 rounded-lg px-3 py-2 text-sm leading-5 select-none transition-colors duration-75 transform-gpu backface-hidden ${
                                     option.disabled
-                                        ? "opacity-40 cursor-not-allowed text-gray-400"
+                                        ? "opacity-40 cursor-not-allowed text-gray-400 bg-transparent"
                                         : isSelected
-                                        ? "bg-indigo-50 text-indigo-600 font-semibold dark:bg-indigo-950/60 dark:text-indigo-300 cursor-pointer"
-                                        : "text-gray-900 dark:text-gray-100 hover:bg-gray-100 dark:hover:bg-gray-700/60 cursor-pointer"
+                                        ? "bg-indigo-50 text-indigo-600 font-semibold hover:bg-indigo-100/80 dark:bg-indigo-950/60 dark:text-indigo-300 dark:hover:bg-indigo-900/60 cursor-pointer"
+                                        : "text-gray-900 dark:text-gray-100 bg-transparent hover:bg-gray-100 dark:hover:bg-gray-700/60 cursor-pointer"
                                 }`}
                             >
-                                <span className="truncate pr-2">{option.label}</span>
+                                <span className="truncate pr-2 leading-5">{option.label}</span>
                                 {isSelected && (
                                     <FiCheck className="w-4 h-4 shrink-0 text-indigo-600 dark:text-indigo-400" />
                                 )}
