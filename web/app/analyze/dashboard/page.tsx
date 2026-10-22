@@ -6,8 +6,10 @@ import { FiBarChart2, FiCpu } from "react-icons/fi";
 import EDATab from "@/components/tabs/edaTab";
 import FeatureSelectionTab from "@/components/tabs/featureSelectionTab";
 import { useAuth } from "@/context/authcontext";
+import { useTranslations } from "next-intl";
 
 function DashboardContent() {
+    const t = useTranslations("analyzeDashboard");
     const searchParams = useSearchParams();
     const router = useRouter();
 
@@ -41,7 +43,7 @@ function DashboardContent() {
         return (
             <div className="flex items-center justify-center h-full min-h-[50vh]">
                 <div className="w-8 h-8 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                <span className="ml-3 text-gray-500 font-medium">Verifying access...</span>
+                <span className="ml-3 text-gray-500 font-medium">{t("verifying")}</span>
             </div>
         );
     }
@@ -53,7 +55,7 @@ function DashboardContent() {
     if (!datasetId || !targetColumn) {
         return (
             <div className="flex flex-col items-center justify-center h-full min-h-[50vh]">
-                <p className="text-gray-500">Missing dataset information. Please upload a dataset first.</p>
+                <p className="text-gray-500">{t("missingInfo")}</p>
             </div>
         );
     }
@@ -64,9 +66,9 @@ function DashboardContent() {
                 {/* Phần Tiêu đề */}
                 <div className="flex items-center gap-4 mb-4 px-4">
                     <div>
-                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">Detailed Dataset Analysis</h1>
+                        <h1 className="text-2xl font-bold text-gray-900 dark:text-white">{t("title")}</h1>
                         <p className="text-gray-500 dark:text-gray-400 mt-1">
-                            Target feature: <span className="font-bold text-[#4361EE] uppercase bg-[#4361EE]/10 px-2 py-0.5 rounded ml-1">{targetColumn}</span>
+                            {t("targetFeature")} <span className="font-bold text-[#4361EE] uppercase bg-[#4361EE]/10 px-2 py-0.5 rounded ml-1">{targetColumn}</span>
                         </p>
                     </div>
                 </div>
@@ -81,7 +83,7 @@ function DashboardContent() {
                             }`}
                     >
                         <FiBarChart2 className="text-lg" />
-                        EDA
+                        {t("tabs.eda")}
                     </button>
                     <button
                         onClick={() => setActiveTab("fs")}
@@ -93,7 +95,7 @@ function DashboardContent() {
                             }`}
                     >
                         <FiCpu className="text-lg" />
-                        Feature Selection
+                        {t("tabs.featureSelection")}
                     </button>
                 </div>
             </div>

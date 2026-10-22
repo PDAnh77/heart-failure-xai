@@ -531,5 +531,218 @@
       "trainError": "An error occurred during training.",
       "trainSuccess": "Model trained successfully!"
     }
+  },
+  "imageModal": {
+    "download": "Download image",
+    "close": "Close modal",
+    "alt": "Expanded analysis chart"
+  },
+  "analyzeDashboard": {
+    "verifying": "Verifying access...",
+    "missingInfo": "Missing dataset information. Please upload a dataset first.",
+    "title": "Detailed Dataset Analysis",
+    "targetFeature": "Target feature:",
+    "tabs": {
+      "eda": "EDA",
+      "featureSelection": "Feature Selection"
+    }
+  },
+  "edaTab": {
+    "toast": {
+      "analysisSuccess": "Analysis completed successfully!",
+      "downloadError": "Failed to download the dataset."
+    },
+    "loading": {
+      "analyzing": "Analyzing data structure...",
+      "optimizing": "Optimizing and preparing dataset...",
+      "generatingCharts": "Generating analytical charts..."
+    },
+    "summary": {
+      "title": "Dataset summary",
+      "scaleTitle": "Dataset scale",
+      "totalRows": "Total Rows",
+      "totalColumns": "Total Columns",
+      "cleanedRows": "Cleaned rows",
+      "qualityTitle": "Data quality",
+      "duplicateRows": "Duplicate rows:",
+      "duplicatesRemoved": "{count} removed",
+      "rowsMissing": "{count} rows missing",
+      "integrityScan": "* Data integrity scan identified inconsistencies. Automated cleanup applied where possible.",
+      "perfectIntegrity": "Perfect data integrity",
+      "perfectIntegrityDesc": "No missing values or duplicates were detected in the dataset.",
+      "numericalFeatures": "Numerical features",
+      "categoricalFeatures": "Categorical features"
+    },
+    "table": {
+      "noData": "No data available",
+      "loadingMore": "Loading more rows..."
+    },
+    "comparison": {
+      "title": "Dataset comparison",
+      "originalTitle": "Original data",
+      "aboutOriginalTitle": "About original dataset",
+      "aboutOriginalDesc": "This is your raw, untouched dataset exactly as it was uploaded. It serves as the baseline to verify the integrity of the automated preprocessing steps.",
+      "rawFormatLabel": "Raw format:",
+      "rawFormatDesc": "Features retain their original scales, string text, and categorical labels.",
+      "potentialIssuesLabel": "Potential issues:",
+      "potentialIssuesDesc": "May contain duplicate rows, missing values (NaN/Null), or unencoded variables.",
+      "readinessLabel": "Algorithm readiness:",
+      "readinessDesc": "Not yet optimized for training machine learning models.",
+      "processedTitle": "Preprocessed data",
+      "downloadBtn": "Download dataset",
+      "downloading": "Downloading...",
+      "aboutProcessedTitle": "About preprocessed dataset",
+      "aboutProcessedDesc": "The dataset has been automatically cleaned and standardized through our pipeline to ensure optimal model performance:",
+      "cleaningLabel": "Data cleaning:",
+      "cleaningDesc": "Dropped rows with missing target values and removed exact duplicates to prevent bias.",
+      "imputationLabel": "Imputation:",
+      "encodingLabel": "Encoding:",
+      "encodingDesc": "Applied Label Encoding to convert categorical strings into machine-readable numbers.",
+      "scalingLabel": "Scaling:",
+      "scalingDesc": "Used Standard Scaler on numerical features to ensure equal contribution across variables (Mean=0, Variance=1)."
+    },
+    "imputation": {
+      "knn": {
+        "label": "KNN Imputer",
+        "detail": "Estimates missing values using nearest neighbors in feature space."
+      },
+      "mice": {
+        "label": "MICE Imputer",
+        "detail": "Iteratively imputes each feature using the others as predictors."
+      },
+      "mean": {
+        "label": "Mean / Mode",
+        "detail": "Uses mean for numerical features and mode for categorical features."
+      },
+      "default": {
+        "label": "Median / Mode",
+        "detail": "Uses median for numerical features and mode for categorical features."
+      }
+    },
+    "charts": {
+      "header": "Exploratory data analysis",
+      "target_distribution": {
+        "title": "Target distribution",
+        "desc": "Illustrates the distribution of the target variable. This helps identify if the dataset is balanced or imbalanced, which is crucial for model evaluation."
+      },
+      "target_correlation": {
+        "title": "Target correlation",
+        "desc": "Shows how strongly each individual numerical feature correlates directly with the target variable, highlighting the most predictive factors."
+      },
+      "full_correlation": {
+        "title": "Feature correlation matrix",
+        "desc": "Displays the correlation matrix across all features. Distinct colored regions indicate strong relationships, useful for spotting multicollinearity."
+      },
+      "anova_score": {
+        "title": "ANOVA F-Test (Numerical)",
+        "desc": "Measures the linear dependency between numerical features and the target. Features with higher F-scores are highly informative for the model."
+      },
+      "chi_square_score": {
+        "title": "Chi-Square (Categorical)",
+        "desc": "Evaluates the statistical significance of categorical features against the target variable. Higher scores indicate stronger relevance."
+      }
+    },
+    "clickToExpand": "Click to expand",
+    "plotNumber": "Plot {number}"
+  },
+  "featureSelectionTab": {
+    "running": "Running feature selection",
+    "loadingMessages": [
+      "Preparing and validating dataset...",
+      "Analyzing feature relevance...",
+      "Exploring potential feature combinations...",
+      "Evaluating model performance across selections...",
+      "Finalizing the most impactful feature set..."
+    ],
+    "title": "Feature selection results (Genetic algorithm)",
+    "subtitle": "The algorithm has identified the most predictive subset of features. This helps in reducing dimensionality, preventing overfitting, and improving model training efficiency.",
+    "downloadBtn": "Download dataset",
+    "downloading": "Downloading...",
+    "stats": {
+      "bestAccuracy": "Best accuracy",
+      "vsBaseline": "vs Baseline",
+      "featureCount": "Feature count",
+      "selected": "Selected",
+      "reducedFrom": "Reduced from {count} initial features",
+      "dataBalancing": "Data Balancing:",
+      "none": "None",
+      "noBalancingDesc": "Dataset used as-is. No balancing applied.",
+      "skipped": "Skipped",
+      "original": "Original",
+      "balanced": "Balanced",
+      "classLabel": "Class {cls}:",
+      "processingResults": "Processing results..."
+    },
+    "optimalSubset": "Optimal feature subset",
+    "evaluation": {
+      "title": "Impact evaluation",
+      "loading": "Please wait while we evaluate the selected features...",
+      "modelUsing": "Model Using",
+      "noData": "Evaluation data is not available."
+    },
+    "metrics": {
+      "accuracy": "Accuracy",
+      "recall": "Recall (Sensitivity)",
+      "precision": "Precision",
+      "f1": "F1-Score"
+    },
+    "clickToExpand": "Click to expand",
+    "shap": {
+      "title": "Global importance (SHAP)",
+      "before": "Before Feature Selection",
+      "after": "After Feature Selection"
+    },
+    "lime": {
+      "title": "Local explanations (LIME)",
+      "desc": "The XAI Score (R²) indicates the reliability of the explanation for the chosen row. A score closer to 1.0 means the explanation is highly trustworthy.",
+      "rowIndex": "Row index:",
+      "generate": "Generate",
+      "generating": "Generating LIME for row {row}...",
+      "xaiScore": "XAI Score (R²): {score}",
+      "before": "Before Feature Selection",
+      "after": "After Feature Selection"
+    },
+    "params": {
+      "title": "Algorithm parameters",
+      "balancingLabel": "Data balancing",
+      "balancingDesc": "Choose method to handle imbalanced classes.",
+      "balancingOptions": {
+        "none": "None",
+        "adasyn": "ADASYN",
+        "smote": "SMOTE"
+      },
+      "modelLabel": "Evaluation model",
+      "modelDesc": "ML algorithm used to evaluate feature subsets.",
+      "sizeLabel": "Population size",
+      "sizeDesc": "Individuals in each generation (10 - 200).",
+      "mutationLabel": "Mutation rate",
+      "mutationDesc": "Probability of feature flipping (0.01 - 0.5).",
+      "nParentsLabel": "Number of parents",
+      "nParentsPlaceholder": "Default",
+      "nParentsDesc": "Best individuals kept. (Less than Population).",
+      "testSizeLabel": "Test size",
+      "testSizeDesc": "Proportion of data for evaluation (0.1 - 0.5).",
+      "rerunBtn": "Rerun selection"
+    },
+    "toast": {
+      "rerunSuccess": "Feature selection rerun completed successfully!",
+      "runSuccess": "Feature selection completed successfully!",
+      "runFailed": "Feature selection failed.",
+      "lostConnection": "Lost connection to server while checking task status.",
+      "startFailed": "Failed to start feature selection.",
+      "invalidSize": "Population size must be between 10 and 200.",
+      "invalidMutationRate": "Mutation rate must be between 0.01 and 0.5.",
+      "invalidTestSize": "Test size must be between 0.1 and 0.5.",
+      "invalidNParentsMin": "Number of parents must be greater than 0.",
+      "invalidNParentsMax": "Number of parents must be less than Population size.",
+      "datasetIdMissing": "Dataset ID not available",
+      "downloadFailed": "Failed to download dataset",
+      "evalNotReady": "Evaluation data not ready.",
+      "invalidRowIndex": "Row index must be 0 or greater.",
+      "limeFailed": "Failed to generate LIME explanations.",
+      "evalStartFailed": "Could not start deep evaluation.",
+      "evalFailed": "Evaluation failed to generate charts.",
+      "evalConnectionLost": "Lost connection to server while evaluating."
+    }
   }
 }

@@ -531,5 +531,218 @@
       "trainError": "Đã xảy ra lỗi trong quá trình huấn luyện.",
       "trainSuccess": "Huấn luyện mô hình thành công!"
     }
+  },
+  "imageModal": {
+    "download": "Tải xuống hình ảnh",
+    "close": "Đóng cửa sổ",
+    "alt": "Phóng to biểu đồ phân tích"
+  },
+  "analyzeDashboard": {
+    "verifying": "Đang xác thực quyền truy cập...",
+    "missingInfo": "Thiếu thông tin tập dữ liệu. Vui lòng tải lên tập dữ liệu trước.",
+    "title": "Phân tích Tập dữ liệu Chi tiết",
+    "targetFeature": "Đặc trưng mục tiêu:",
+    "tabs": {
+      "eda": "Khám phá Dữ liệu (EDA)",
+      "featureSelection": "Lựa chọn Đặc trưng"
+    }
+  },
+  "edaTab": {
+    "toast": {
+      "analysisSuccess": "Phân tích dữ liệu hoàn tất thành công!",
+      "downloadError": "Không thể tải xuống tập dữ liệu."
+    },
+    "loading": {
+      "analyzing": "Đang phân tích cấu trúc dữ liệu...",
+      "optimizing": "Đang tối ưu hóa và chuẩn bị tập dữ liệu...",
+      "generatingCharts": "Đang tạo biểu đồ phân tích..."
+    },
+    "summary": {
+      "title": "Tổng quan tập dữ liệu",
+      "scaleTitle": "Quy mô dữ liệu",
+      "totalRows": "Tổng số dòng",
+      "totalColumns": "Tổng số cột",
+      "cleanedRows": "Số dòng sau làm sạch",
+      "qualityTitle": "Chất lượng dữ liệu",
+      "duplicateRows": "Dòng trùng lặp:",
+      "duplicatesRemoved": "Đã xóa {count}",
+      "rowsMissing": "Thiếu {count} dòng",
+      "integrityScan": "* Quá trình quét tính toàn vẹn phát hiện dữ liệu bất thường. Đã tự động áp dụng tiền xử lý phù hợp.",
+      "perfectIntegrity": "Dữ liệu hoàn hảo",
+      "perfectIntegrityDesc": "Không phát hiện giá trị bị thiếu hoặc dòng trùng lặp nào trong tập dữ liệu.",
+      "numericalFeatures": "Đặc trưng số (Numerical)",
+      "categoricalFeatures": "Đặc trưng phân loại (Categorical)"
+    },
+    "table": {
+      "noData": "Không có dữ liệu",
+      "loadingMore": "Đang tải thêm dòng..."
+    },
+    "comparison": {
+      "title": "So sánh dữ liệu",
+      "originalTitle": "Dữ liệu gốc",
+      "aboutOriginalTitle": "Về tập dữ liệu gốc",
+      "aboutOriginalDesc": "Đây là dữ liệu thô nguyên bản của bạn ngay khi tải lên. Dữ liệu này dùng làm mốc so sánh để kiểm tra tính toàn vẹn qua các bước tiền xử lý tự động.",
+      "rawFormatLabel": "Định dạng thô:",
+      "rawFormatDesc": "Các đặc trưng giữ nguyên thang đo ban đầu, văn bản chuỗi và nhãn danh mục.",
+      "potentialIssuesLabel": "Vấn đề tiềm ẩn:",
+      "potentialIssuesDesc": "Có thể chứa dòng trùng lặp, giá trị bị thiếu (NaN/Null) hoặc các biến chưa được mã hóa.",
+      "readinessLabel": "Mức độ sẵn sàng:",
+      "readinessDesc": "Chưa được tối ưu hóa để huấn luyện các mô hình học máy.",
+      "processedTitle": "Dữ liệu đã tiền xử lý",
+      "downloadBtn": "Tải xuống dữ liệu",
+      "downloading": "Đang tải xuống...",
+      "aboutProcessedTitle": "Về tập dữ liệu đã xử lý",
+      "aboutProcessedDesc": "Tập dữ liệu đã được tự động làm sạch và chuẩn hóa qua pipeline nhằm đảm bảo hiệu suất mô hình tối ưu:",
+      "cleaningLabel": "Làm sạch dữ liệu:",
+      "cleaningDesc": "Loại bỏ các dòng thiếu nhãn mục tiêu và xóa dòng trùng lặp hoàn toàn để tránh thiên vị.",
+      "imputationLabel": "Điền khuyết (Imputation):",
+      "encodingLabel": "Mã hóa (Encoding):",
+      "encodingDesc": "Áp dụng Label Encoding để chuyển đổi các chuỗi phân loại thành số cho máy học.",
+      "scalingLabel": "Chuẩn hóa tỷ lệ (Scaling):",
+      "scalingDesc": "Sử dụng Standard Scaler trên các đặc trưng số để đảm bảo đóng góp đồng đều giữa các biến (Trung bình=0, Phương sai=1)."
+    },
+    "imputation": {
+      "knn": {
+        "label": "KNN Imputer",
+        "detail": "Ước tính giá trị thiếu dựa trên các điểm lân cận gần nhất trong không gian đặc trưng."
+      },
+      "mice": {
+        "label": "MICE Imputer",
+        "detail": "Điền khuyết lặp bằng cách sử dụng các đặc trưng khác làm biến dự đoán."
+      },
+      "mean": {
+        "label": "Mean / Mode",
+        "detail": "Sử dụng giá trị trung bình cho biến số và yếu vị cho biến phân loại."
+      },
+      "default": {
+        "label": "Median / Mode",
+        "detail": "Sử dụng trung vị cho biến số và yếu vị cho biến phân loại."
+      }
+    },
+    "charts": {
+      "header": "Khám phá phân tích dữ liệu (EDA)",
+      "target_distribution": {
+        "title": "Phân phối nhãn mục tiêu",
+        "desc": "Thể hiện phân phối của biến mục tiêu, giúp nhận diện tập dữ liệu cân bằng hay mất cân bằng để đánh giá mô hình chính xác."
+      },
+      "target_correlation": {
+        "title": "Tương quan với biến mục tiêu",
+        "desc": "Cho thấy mức độ tương quan tuyến tính trực tiếp của từng đặc trưng số với biến mục tiêu, làm nổi bật các yếu tố dự đoán quan trọng."
+      },
+      "full_correlation": {
+        "title": "Ma trận tương quan đặc trưng",
+        "desc": "Hiển thị ma trận tương quan giữa tất cả các đặc trưng. Các vùng màu đậm thể hiện mối quan hệ mạnh, hữu ích để phát hiện hiện tượng đa cộng tuyến."
+      },
+      "anova_score": {
+        "title": "Kiểm định ANOVA F-Test (Biến số)",
+        "desc": "Đo lường mức độ phụ thuộc giữa các đặc trưng số và biến mục tiêu. Điểm F càng cao chứng tỏ đặc trưng mang lại càng nhiều thông tin hữu ích."
+      },
+      "chi_square_score": {
+        "title": "Kiểm định Chi-Square (Biến phân loại)",
+        "desc": "Đánh giá ý nghĩa thống kê của các đặc trưng phân loại đối với biến mục tiêu. Điểm càng cao cho thấy mức độ liên quan càng chặt chẽ."
+      }
+    },
+    "clickToExpand": "Nhấp để phóng to",
+    "plotNumber": "Biểu đồ {number}"
+  },
+  "featureSelectionTab": {
+    "running": "Đang chạy lựa chọn đặc trưng",
+    "loadingMessages": [
+      "Đang chuẩn bị và kiểm tra hợp lệ tập dữ liệu...",
+      "Đang phân tích mức độ liên quan của các đặc trưng...",
+      "Đang khám phá các tổ hợp đặc trưng tiềm năng...",
+      "Đang đánh giá hiệu suất mô hình trên các tập chọn lọc...",
+      "Đang hoàn thiện tập đặc trưng mang lại hiệu quả cao nhất..."
+    ],
+    "title": "Kết quả lựa chọn đặc trưng (Giải thuật Di truyền - GA)",
+    "subtitle": "Giải thuật đã xác định tập con đặc trưng có tính dự đoán cao nhất. Giúp giảm số chiều dữ liệu, tránh quá khớp (overfitting) và tăng tốc độ huấn luyện mô hình.",
+    "downloadBtn": "Tải xuống dữ liệu",
+    "downloading": "Đang tải xuống...",
+    "stats": {
+      "bestAccuracy": "Độ chính xác cao nhất",
+      "vsBaseline": "so với mô hình cơ sở",
+      "featureCount": "Số lượng đặc trưng",
+      "selected": "Đã chọn",
+      "reducedFrom": "Đã rút gọn từ {count} đặc trưng ban đầu",
+      "dataBalancing": "Cân bằng dữ liệu:",
+      "none": "Không",
+      "noBalancingDesc": "Sử dụng dữ liệu nguyên bản. Không áp dụng cân bằng.",
+      "skipped": "Đã bỏ qua",
+      "original": "Ban đầu",
+      "balanced": "Sau cân bằng",
+      "classLabel": "Lớp {cls}:",
+      "processingResults": "Đang xử lý kết quả..."
+    },
+    "optimalSubset": "Tập đặc trưng tối ưu",
+    "evaluation": {
+      "title": "Đánh giá tác động",
+      "loading": "Vui lòng chờ trong khi hệ thống đánh giá các đặc trưng đã chọn...",
+      "modelUsing": "Mô hình đánh giá",
+      "noData": "Không có dữ liệu đánh giá."
+    },
+    "metrics": {
+      "accuracy": "Độ chính xác (Accuracy)",
+      "recall": "Độ nhạy (Recall)",
+      "precision": "Độ chuẩn xác (Precision)",
+      "f1": "Điểm F1-Score"
+    },
+    "clickToExpand": "Nhấp để phóng to",
+    "shap": {
+      "title": "Tầm quan trọng toàn cục (SHAP)",
+      "before": "Trước khi chọn đặc trưng",
+      "after": "Sau khi chọn đặc trưng"
+    },
+    "lime": {
+      "title": "Giải thích cục bộ (LIME)",
+      "desc": "Điểm XAI Score (R²) phản ánh độ tin cậy của lời giải thích cho dòng dữ liệu được chọn. Điểm càng gần 1.0 thì lời giải thích càng đáng tin cậy.",
+      "rowIndex": "Chỉ số dòng:",
+      "generate": "Tạo giải thích",
+      "generating": "Đang tạo giải thích LIME cho dòng {row}...",
+      "xaiScore": "Điểm XAI (R²): {score}",
+      "before": "Trước khi chọn đặc trưng",
+      "after": "Sau khi chọn đặc trưng"
+    },
+    "params": {
+      "title": "Tham số giải thuật",
+      "balancingLabel": "Cân bằng dữ liệu",
+      "balancingDesc": "Chọn phương pháp xử lý dữ liệu mất cân bằng lớp.",
+      "balancingOptions": {
+        "none": "Không",
+        "adasyn": "ADASYN",
+        "smote": "SMOTE"
+      },
+      "modelLabel": "Mô hình đánh giá",
+      "modelDesc": "Thuật toán học máy dùng để đánh giá các tập con đặc trưng.",
+      "sizeLabel": "Kích thước quần thể",
+      "sizeDesc": "Số lượng cá thể trong mỗi thế hệ (10 - 200).",
+      "mutationLabel": "Tỷ lệ đột biến",
+      "mutationDesc": "Xác suất đảo trạng thái của một đặc trưng (0.01 - 0.5).",
+      "nParentsLabel": "Số lượng cha mẹ",
+      "nParentsPlaceholder": "Mặc định",
+      "nParentsDesc": "Số cá thể tốt nhất giữ lại để lai ghép (nhỏ hơn Quần thể).",
+      "testSizeLabel": "Tỷ lệ tập kiểm tra",
+      "testSizeDesc": "Tỷ lệ dữ liệu dành cho đánh giá (0.1 - 0.5).",
+      "rerunBtn": "Chạy lại lựa chọn"
+    },
+    "toast": {
+      "rerunSuccess": "Chạy lại lựa chọn đặc trưng hoàn tất thành công!",
+      "runSuccess": "Lựa chọn đặc trưng hoàn tất thành công!",
+      "runFailed": "Lựa chọn đặc trưng thất bại.",
+      "lostConnection": "Mất kết nối với máy chủ khi kiểm tra trạng thái tác vụ.",
+      "startFailed": "Không thể bắt đầu lựa chọn đặc trưng.",
+      "invalidSize": "Kích thước quần thể phải từ 10 đến 200.",
+      "invalidMutationRate": "Tỷ lệ đột biến phải từ 0.01 đến 0.5.",
+      "invalidTestSize": "Tỷ lệ tập kiểm tra phải từ 0.1 đến 0.5.",
+      "invalidNParentsMin": "Số lượng cha mẹ phải lớn hơn 0.",
+      "invalidNParentsMax": "Số lượng cha mẹ phải nhỏ hơn Kích thước quần thể.",
+      "datasetIdMissing": "Không có mã định danh tập dữ liệu.",
+      "downloadFailed": "Tải xuống tập dữ liệu thất bại.",
+      "evalNotReady": "Dữ liệu đánh giá chưa sẵn sàng.",
+      "invalidRowIndex": "Chỉ số dòng phải từ 0 trở lên.",
+      "limeFailed": "Không thể tạo lời giải thích LIME.",
+      "evalStartFailed": "Không thể bắt đầu đánh giá chuyên sâu.",
+      "evalFailed": "Đánh giá thất bại khi tạo biểu đồ.",
+      "evalConnectionLost": "Mất kết nối với máy chủ trong quá trình đánh giá."
+    }
   }
 }
