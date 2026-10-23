@@ -133,16 +133,28 @@ Set up a PostgreSQL database locally or create a project on [Supabase](https://s
    ```
 
 ### 3. Frontend (Web)
-```bash
-cd web/
-npm install
-npm run dev
-```
+1. Navigate to `web/`:
+   ```bash
+   cd web/
+   ```
+
+2. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+3. Configure `.env.local` (see [Environment Variables](#environment-variables)).
+
+4. Run the web application:
+   ```bash
+   npm run dev
+   ```
 
 ---
 
 ## Environment Variables
 
+### Backend (`api/.env`)
 Create a `.env` file inside the `api/` directory:
 
 ```env
@@ -165,6 +177,15 @@ CLIENT_URL=http://localhost:3000
 GOOGLE_CLIENT_ID=
 GOOGLE_CLIENT_SECRET=
 REDIRECT_URI=http://localhost:8000/api/auth/google/callback
+```
+
+### Frontend (`web/.env.local`)
+Create a `.env.local` file inside the `web/` directory:
+
+```env
+# URLs (examples for local development)
+API_URL=http://localhost:8000
+CLIENT_URL=http://localhost:3000
 ```
 
 ---

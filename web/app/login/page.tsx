@@ -7,6 +7,7 @@ import { User } from "@/types/user";
 import { FcGoogle } from "react-icons/fc";
 import CustomSelect from "@/components/ui/customSelect";
 import { api } from "@/lib/api";
+import { isLocalEnvironment } from "@/lib/env";
 import { useTranslations } from "next-intl";
 
 export default function Login() {
@@ -32,13 +33,11 @@ export default function Login() {
 
     useEffect(() => {
         // Detect local development environment
-        const isLocal =
-            process.env.NODE_ENV === "development" ||
-            (typeof window !== "undefined" &&
-                (window.location.hostname === "localhost" ||
-                    window.location.hostname === "127.0.0.1" ||
-                    window.location.hostname.startsWith("192.168.")));
+        const isLocal = isLocalEnvironment();
         setIsDev(isLocal);
+        if (!isLocal) {
+            setMode("signin");
+        }
     }, []);
 
     const handleGoogleLogin = () => {
@@ -156,49 +155,49 @@ export default function Login() {
         <div className="flex min-h-full flex-col px-6 py-12 lg:px-8">
             <div className="sm:mx-auto sm:w-full sm:max-w-sm">
                 <h2 className="mt-8 text-center text-2xl/9 font-bold tracking-tight text-gray-900 dark:text-white">
-                    {mode === "signin" ? t("title") : t("signUpTitle")}
+                    {mode === "signin" || !isDev ? t("title") : t("signUpTitle")}
                 </h2>
             </div>
 
             <div className="mt-6 sm:mx-auto sm:w-full sm:max-w-sm">
-                {/* Tabs chuyển đổi giữa Sign In và Sign Up */}
-                <div className="flex rounded-xl bg-gray-100 p-1 dark:bg-white/5 mb-6">
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setMode("signin");
-                            setErrors({});
-                        }}
-                        className={`flex-1 rounded-lg py-2 text-sm font-semibold transition cursor-pointer ${
-                            mode === "signin"
-                                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
-                                : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                        }`}
-                    >
-                        {t("tabSignIn")}
-                    </button>
-                    <button
-                        type="button"
-                        onClick={() => {
-                            setMode("signup");
-                            setErrors({});
-                        }}
-                        className={`flex-1 rounded-lg py-2 text-sm font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
-                            mode === "signup"
-                                ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
-                                : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
-                        }`}
-                    >
-                        <span>{t("tabSignUp")}</span>
-                        {isDev && (
+                {/* Tabs chuyển đổi giữa Sign In và Sign Up (Chỉ hiển thị ở local development) */}
+                {isDev && (
+                    <div className="flex rounded-xl bg-gray-100 p-1 dark:bg-white/5 mb-6">
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setMode("signin");
+                                setErrors({});
+                            }}
+                            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition cursor-pointer ${
+                                mode === "signin"
+                                    ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
+                                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                            }`}
+                        >
+                            {t("tabSignIn")}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => {
+                                setMode("signup");
+                                setErrors({});
+                            }}
+                            className={`flex-1 rounded-lg py-2 text-sm font-semibold transition cursor-pointer flex items-center justify-center gap-1.5 ${
+                                mode === "signup"
+                                    ? "bg-white text-gray-900 shadow-sm dark:bg-gray-800 dark:text-white"
+                                    : "text-gray-500 hover:text-gray-900 dark:text-gray-400 dark:hover:text-white"
+                            }`}
+                        >
+                            <span>{t("tabSignUp")}</span>
                             <span className="text-[10px] px-1.5 py-0.5 rounded font-medium bg-amber-100 text-amber-800 dark:bg-amber-900/40 dark:text-amber-300">
                                 {t("devBadge")}
                             </span>
-                        )}
-                    </button>
-                </div>
+                        </button>
+                    </div>
+                )}
 
-                {mode === "signin" ? (
+                {mode === "signin" || !isDev ? (
                     /* FORM SIGN IN */
                     <form onSubmit={handleSignIn} method="POST" noValidate className="space-y-5">
                         <div>

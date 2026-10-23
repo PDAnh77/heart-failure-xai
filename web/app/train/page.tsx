@@ -172,7 +172,7 @@ export default function TrainModel() {
                 </p>
             </div>
 
-            <div className="flex flex-col justify-start items-center flex-1 mt-8 mb-10 w-full">
+            <div className={`flex flex-col ${!file && !result ? "justify-center" : "justify-start"} items-center flex-1 ${!file && !result ? "" : "mt-8 mb-10"} w-full`}>
                 <div className="w-full max-w-2xl">
 
                     {/* Dropzone Area */}
