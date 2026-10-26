@@ -17,7 +17,7 @@ LOCAL_MODEL_PATH = os.path.normpath(os.path.join(CURRENT_DIR, "../../notebooks/m
 def load_model_startup():
     global _pipeline_instance
 
-    # Thử load từ local path
+    # Load từ local path
     if os.path.exists(LOCAL_MODEL_PATH):
         print(f"Found local model at: {LOCAL_MODEL_PATH}")
         try:
@@ -30,15 +30,13 @@ def load_model_startup():
     else:
         print(f"Local model not found at {LOCAL_MODEL_PATH}. Attempting to download from Storage...")
 
-    # Thử tải từ Storage (Supabase Storage hoặc Local File Storage)
+    # Tải từ Supabase Storage
     try:
         data = supabase.storage.from_(BUCKET_NAME).download(MODEL_FILENAME)
 
-        # Load trực tiếp từ memory buffer
         _pipeline_instance = joblib.load(io.BytesIO(data))
         print("Model downloaded and loaded complete from Storage.")
 
-        # Lưu file về local để các lần khởi động tiếp theo không phải tải lại qua mạng
         try:
             model_dir = os.path.dirname(LOCAL_MODEL_PATH)
             if model_dir:
@@ -47,9 +45,9 @@ def load_model_startup():
                 f.write(data)
             print(f"Saved model locally at: {LOCAL_MODEL_PATH}")
         except Exception as save_err:
-            print(f"Notice: Could not save model to disk ({save_err}).")
+            print(f"Could not save model to disk ({save_err}).")
     except Exception as e:
-        print(f"Notice: Pretrained model not found ({e}).")
+        print(f"Pretrained model not found ({e}).")
         print(
             "API started successfully in graceful mode. Prediction endpoints will be disabled until a model is trained or provided."
         )
@@ -59,7 +57,6 @@ def load_model_startup():
 def get_pipeline():
     global _pipeline_instance
     if _pipeline_instance is None:
-        # Thử nạp lại phòng trường hợp model vừa được train hoặc thêm mới
         load_model_startup()
 
     if _pipeline_instance is None:

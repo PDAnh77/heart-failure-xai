@@ -79,7 +79,7 @@ app.include_router(patient_router.router, prefix="/api/patients", tags=["Patient
 app.include_router(dataset_router.router, prefix="/api/datasets", tags=["Dataset Analytics"])
 app.include_router(train_router.router, prefix="/api/train", tags=["Model Training"])
 
-# Mount Local Storage directory để phục vụ file tĩnh (ảnh biểu đồ XAI, avatar, v.v.)
+# Mount Local Storage directory cho file tĩnh (ảnh biểu đồ XAI, avatar, v.v.)
 storage_dir = getattr(settings, "LOCAL_STORAGE_PATH", "storage")
 os.makedirs(storage_dir, exist_ok=True)
 app.mount("/storage", StaticFiles(directory=storage_dir), name="storage")
