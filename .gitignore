@@ -2,7 +2,6 @@
 /api/**/__pycache__/
 **/.env
 /notebooks/result_images/
-/notebooks/models/
 .vscode
 input/testing_dataset
 /api/storage/
