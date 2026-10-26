@@ -46,6 +46,10 @@ A comprehensive AI-powered platform for heart failure analysis and risk predicti
 
 * Output: Probability of heart failure along with corresponding XAI explanations
 
+* Model:
+  - Trained using the **Random Forest** algorithm (`RandomForestClassifier`) located at `notebooks/models/model_predict.pkl`.
+  - Optimized using **Genetic Algorithm (GA)** for feature selection.
+
 * XAI:
   - SHAP (SHapley Additive exPlanations)
   - LIME (Local Interpretable Model-agnostic Explanations)
