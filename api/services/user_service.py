@@ -177,10 +177,9 @@ def create_user(db: Session, new_user: UserSignup):
     user = db.execute(select(User.id).where(User.username == new_user.username)).scalar_one_or_none()
     if user:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="User already existed")
-    new_user.password = get_password_hash(new_user.password)
     user_dict = new_user.model_dump()
-    if not user_dict.get("role"):
-        user_dict["role"] = "user"
+    user_dict["password"] = get_password_hash(new_user.password)
+    user_dict["role"] = "user"
     result = db.execute(insert(User).values(user_dict).returning(User))
     user_obj = result.scalar_one()
     db.commit()

@@ -15,7 +15,6 @@ class UserLogin(BaseModel):
 
 class UserSignup(UserBase):
     password: str
-    role: str | None = Field(default="user")
 
 
 class UserInfo(UserBase):
