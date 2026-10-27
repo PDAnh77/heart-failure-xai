@@ -5,7 +5,6 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from "@/context/authcontext";
 import { User } from "@/types/user";
 import { FcGoogle } from "react-icons/fc";
-import CustomSelect from "@/components/ui/customSelect";
 import { api } from "@/lib/api";
 import { isLocalEnvironment } from "@/lib/env";
 import { useTranslations } from "next-intl";
@@ -23,7 +22,6 @@ export default function Login() {
     const [username, setUsername] = useState("");
     const [email, setEmail] = useState("");
     const [confirmPassword, setConfirmPassword] = useState("");
-    const [role, setRole] = useState<"user" | "admin">("user");
 
     const [errors, setErrors] = useState<Record<string, string>>({});
     const [loading, setLoading] = useState(false);
@@ -119,8 +117,7 @@ export default function Login() {
         const payload = {
             username: username.trim(),
             password: password,
-            email: email.trim() || undefined,
-            role: isDev ? role : "user"
+            email: email.trim() || undefined
         };
 
         try {
@@ -331,25 +328,6 @@ export default function Login() {
                                 />
                             </div>
                         </div>
-
-                        {/* Tùy chọn vai trò (Role) trong môi trường Local Dev */}
-                        {isDev && (
-                            <div>
-                                <label htmlFor="role" className="block text-md/6 font-medium text-gray-900 dark:text-gray-100 mb-1.5">
-                                    {t("fields.role")}
-                                </label>
-                                <CustomSelect
-                                    id="role"
-                                    name="role"
-                                    value={role}
-                                    onChange={(val) => setRole(val as "user" | "admin")}
-                                    options={[
-                                        { value: "user", label: t("fields.roleUser") },
-                                        { value: "admin", label: t("fields.roleAdmin") },
-                                    ]}
-                                />
-                            </div>
-                        )}
 
                         <div>
                             <label htmlFor="signUpPassword" className="block text-md/6 font-medium text-gray-900 dark:text-gray-100">
