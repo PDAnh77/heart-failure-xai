@@ -1,7 +1,8 @@
 from typing import Literal
-from fastapi import APIRouter, Depends, Query, UploadFile
+from fastapi import BackgroundTasks, APIRouter, Depends, Query, UploadFile
 from services.auth_service import require_roles
-from services import dataset_service
+
+from services import dataset_service, preprocessing_service, eda_service, feature_selection_service, xai_service
 
 router = APIRouter()
 
@@ -43,7 +44,7 @@ def preprocess_dataset(
     owner_id: str = Query(None),
     user=Depends(require_roles(["admin", "user"])),
 ):
-    return dataset_service.preprocess(dataset_id, owner_id, user, target_column, imputation_method)
+    return preprocessing_service.preprocess(dataset_id, owner_id, user, target_column, imputation_method)
 
 
 @router.get("/{dataset_id}/download")
@@ -63,13 +64,23 @@ def get_dataset_eda(
     owner_id: str = Query(None),
     user=Depends(require_roles(["admin", "user"])),
 ):
-    return dataset_service.get_eda(dataset_id, target_column, owner_id, user)
+    return eda_service.get_eda(dataset_id, target_column, owner_id, user)
 
 
-@router.get("/{dataset_id}/feature-selection")
+@router.get("/feature-selection/status/{task_id}")
+def check_feature_selection_status(task_id: str):
+    """
+    API dùng để Frontend gọi liên tục (mỗi 3-5s) để lấy kết quả thuật toán
+    """
+    # Hàm này sẽ trả về {"status": "COMPLETED", "result": {...}} khi chạy xong
+    return feature_selection_service.get_task_status(task_id)
+
+
+@router.post("/{dataset_id}/feature-selection")
 def dataset_feature_selection(
     dataset_id: str,
-    target_column: str,
+    target_column: str = Query(...),
+    background_tasks: BackgroundTasks = None,
     size: int = Query(80, ge=10, le=200),
     n_gen: int = Query(10, ge=1, le=50),
     mutation_rate: float = Query(0.2, ge=0.01, le=0.5),
@@ -83,32 +94,49 @@ def dataset_feature_selection(
         description="Choose a data balancing method: 'none' (no balancing applied), 'smote' (SMOTE oversampling), or 'adasyn' (ADASYN oversampling)",
     ),
 ):
-    return dataset_service.genetic_selection(
-        dataset_id,
-        target_column,
-        owner_id,
-        user,
-        size,
-        n_gen,
-        mutation_rate,
-        n_parents,
-        model_name,
-        test_size,
-        balancing_method,
+    # Khởi tạo một Task ID mới và lưu trạng thái vào RAM/DB
+    task_id = feature_selection_service.create_task()
+
+    # Đưa hàm wrapper chạy ngầm vào hàng đợi của FastAPI
+    background_tasks.add_task(
+        feature_selection_service.background_genetic_selection,
+        task_id=task_id,
+        dataset_id=dataset_id,
+        target_column=target_column,
+        owner_id=owner_id,
+        user=user,
+        size=size,
+        n_gen=n_gen,
+        mutation_rate=mutation_rate,
+        n_parents=n_parents,
+        model_name=model_name,
+        test_size=test_size,
+        balancing_method=balancing_method,
     )
 
+    # Trả kết quả cho Frontend mà không cần đợi thuật toán thực thi
+    return {"message": "Feature selection started in the background", "task_id": task_id, "status": "PROCESSING"}
 
-@router.get("/{dataset_id}/feature-selection-evaluation")
-def get_feature_selection_evaluation(
+
+@router.post("/{dataset_id}/feature-selection-evaluation")
+def dataset_feature_selection_evaluation(
     dataset_id: str,
-    fs_dataset_id: str,
-    target_column: str,
-    model_name: str = Query(None),
-    test_size: float = Query(0.3, ge=0.1, le=0.5),
+    background_tasks: BackgroundTasks,
+    fs_dataset_id: str = Query(...),
+    target_column: str = Query(...),
     owner_id: str = Query(None),
     user=Depends(require_roles(["admin", "user"])),
+    model_name: str = Query(None),
+    test_size: float = Query(0.3, ge=0.1, le=0.5),
+    balancing_method: Literal["none", "smote", "adasyn"] = Query("none"),
 ):
-    return dataset_service.evaluate_feature_selection(
+    # Tạo Task ID mới
+    task_id = feature_selection_service.create_task()
+
+    # Đưa tác vụ nặng vào chạy ngầm
+    background_tasks.add_task(
+        feature_selection_service.background_evaluate_feature_selection,
+        task_id=task_id,
         dataset_id=dataset_id,
         fs_dataset_id=fs_dataset_id,
         target_column=target_column,
@@ -116,7 +144,11 @@ def get_feature_selection_evaluation(
         user=user,
         model_name=model_name,
         test_size=test_size,
+        balancing_method=balancing_method,
     )
+
+    # Trả về ngay lập tức
+    return {"message": "Evaluation started in the background", "task_id": task_id, "status": "PROCESSING"}
 
 
 @router.get("/{dataset_id}/feature-selection-evaluation/lime")
@@ -130,7 +162,7 @@ def get_standalone_lime_explanation(
     owner_id: str = Query(None),
     user=Depends(require_roles(["admin", "user"])),
 ):
-    return dataset_service.generate_lime_explanation(
+    return xai_service.generate_lime_explanation(
         dataset_id=dataset_id,
         fs_dataset_id=fs_dataset_id,
         target_column=target_column,

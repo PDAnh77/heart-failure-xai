@@ -1,9 +1,71 @@
+import random
 import uuid
+from pathlib import Path
+import pandas as pd
 from fastapi import HTTPException, status
-from sqlalchemy import select, insert, update, delete
+from sqlalchemy import select, insert, update, delete, func
 from models.patient_model import Patient
 from schemas.patient_schema import PatientCreate, PatientUpdate
 from sqlalchemy.orm import Session
+
+DEFAULT_SAMPLE_PATIENTS = [
+    {
+        "age": 40,
+        "sex": "M",
+        "chest_pain_type": "ATA",
+        "resting_bp": 140,
+        "cholesterol": 289,
+        "fasting_bs": 0,
+        "resting_ecg": "Normal",
+        "max_hr": 172,
+        "exercise_angina": "N",
+        "oldpeak": 0.0,
+        "st_slope": "Up",
+        "heart_disease": 0,
+    },
+    {
+        "age": 49,
+        "sex": "F",
+        "chest_pain_type": "NAP",
+        "resting_bp": 160,
+        "cholesterol": 180,
+        "fasting_bs": 0,
+        "resting_ecg": "Normal",
+        "max_hr": 156,
+        "exercise_angina": "N",
+        "oldpeak": 1.0,
+        "st_slope": "Flat",
+        "heart_disease": 1,
+    },
+    {
+        "age": 54,
+        "sex": "M",
+        "chest_pain_type": "ASY",
+        "resting_bp": 140,
+        "cholesterol": 239,
+        "fasting_bs": 0,
+        "resting_ecg": "Normal",
+        "max_hr": 160,
+        "exercise_angina": "N",
+        "oldpeak": 1.2,
+        "st_slope": "Up",
+        "heart_disease": 0,
+    },
+    {
+        "age": 63,
+        "sex": "M",
+        "chest_pain_type": "ASY",
+        "resting_bp": 150,
+        "cholesterol": 220,
+        "fasting_bs": 1,
+        "resting_ecg": "ST",
+        "max_hr": 144,
+        "exercise_angina": "Y",
+        "oldpeak": 2.5,
+        "st_slope": "Flat",
+        "heart_disease": 1,
+    },
+]
 
 
 def check_uuid(id: str):
@@ -20,9 +82,17 @@ def get_patients(db: Session, limit: int, offset: int):
 
 
 def get_random_patient(db: Session):
-    rand_uuid = uuid.uuid4()
-    result = db.execute(select(Patient).where(Patient.id >= rand_uuid).order_by(Patient.id).limit(1))
-    return result.scalars().first()
+    # Lấy từ bảng patients trong database
+    result = db.execute(select(Patient).order_by(func.random()).limit(1)).scalars().first()
+    if result:
+        return result
+
+    # Fallback vào danh sách mẫu mặc định
+    chosen = random.choice(DEFAULT_SAMPLE_PATIENTS)
+    return {
+        "id": uuid.uuid4(),
+        **chosen,
+    }
 
 
 def get_patient_by_id(db: Session, patient_id: str, user: dict):

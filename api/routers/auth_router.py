@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Request, Response, Depends
 from dependencies import get_db
 from sqlalchemy.orm import Session
-from schemas.user_schema import UserBase, UserLogin, UserSignup
+from schemas.user_schema import UserBase, UserLogin, UserSignup, UserInfo
 from services.user_service import (
     login_user,
     google_login,
@@ -29,7 +29,7 @@ def login(request: Request, response: Response, user_login: UserLogin, db: Sessi
 def refresh(request: Request, response: Response, db: Session = Depends(get_db)):
     return refresh_access_token(db, request, response)
 
-@router.post("/signup", response_model=UserBase)
+@router.post("/signup", response_model=UserInfo)
 def signup(new_user: UserSignup, db: Session = Depends(get_db)):
     return create_user(db, new_user)
 

@@ -6,6 +6,7 @@ on:
       - "**"
     paths:
       - "web/**"
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -14,30 +15,30 @@ permissions:
 jobs:
   scan_fs:
     name: Trivy Security Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
       
       - name: Trivy Scan (Security Gate)
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: web
           severity: CRITICAL,HIGH
-          version: v0.71.2
+          version: v0.73.0
           ignore-unfixed: true
           exit-code: 1
 
       - name: Trivy Scan (SARIF Report)
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           scan-type: fs
           scan-ref: web
           format: sarif
           output: trivy-results.sarif
           severity: CRITICAL,HIGH
-          version: v0.71.2
+          version: v0.73.0
           ignore-unfixed: true
 
       - name: Upload Trivy SARIF to GitHub Security
@@ -47,7 +48,7 @@ jobs:
 
   deploy_web:
     name: Deploy Web
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: scan_fs
     if: github.ref == 'refs/heads/main'
     steps:

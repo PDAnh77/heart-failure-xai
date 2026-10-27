@@ -9,7 +9,7 @@ import { FiFileText, FiInfo } from "react-icons/fi";
 import { IoMdClose } from "react-icons/io";
 import { useTranslations } from "next-intl";
 
-export default function PredictBatch() {
+export default function PredictBatchTab() {
     const router = useRouter();
     const t = useTranslations("predictBatch");
     const tCommon = useTranslations("common");
@@ -22,8 +22,6 @@ export default function PredictBatch() {
     const [isUploading, setIsUploading] = useState(false);
     const [isPredicting, setIsPredicting] = useState(false);
     const [datasetId, setDatasetId] = useState<string | null>(null);
-    const [columns, setColumns] = useState<string[]>([]);
-    const [selectedTarget, setSelectedTarget] = useState<string>("");
 
     const { user, loading: authLoading, logout, pushNewHistoryItem } = useAuth();
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -42,7 +40,7 @@ export default function PredictBatch() {
 
     const validateAndSetFile = (selectedFile: File | undefined) => {
         if (selectedFile) {
-            if (!selectedFile.name.endsWith('.csv') && !selectedFile.name.match(/\.xlsx?$/)) {
+            if (!selectedFile.name.toLowerCase().match(/\.(csv|xlsx|xls)$/)) {
                 toast.error(t("toast.invalidFile"));
                 return;
             }
@@ -56,14 +54,9 @@ export default function PredictBatch() {
             }
 
             setFile(selectedFile);
-            resetDatasetData();
+            setDatasetId(null);
+            handleUpload(selectedFile);
         }
-    };
-
-    const resetDatasetData = () => {
-        setDatasetId(null);
-        setColumns([]);
-        setSelectedTarget("");
     };
 
     const handleDragOver = (e: DragEvent<HTMLDivElement>) => {
@@ -77,28 +70,24 @@ export default function PredictBatch() {
 
     const removeFile = () => {
         setFile(null);
-        resetDatasetData();
+        setDatasetId(null);
         if (fileInputRef.current) fileInputRef.current.value = "";
     };
 
-    // Upload file to get columns and original_file_type
-    const handleUpload = async () => {
-        if (authLoading) return;
+    // Upload file to get dataset_id
+    const handleUpload = async (fileToUpload?: File) => {
+        const targetFile = fileToUpload || file;
+        if (authLoading || !targetFile) return;
 
         if (!user) {
-            toast.error(tCommon("signInRequired")); 
+            toast.error(tCommon("signInRequired"));
             router.push("/login");
-            return;
-        }
-
-        if (!file) {
-            toast.error(t("toast.noFile"));
             return;
         }
 
         setIsUploading(true);
         const formData = new FormData();
-        formData.append("file", file);
+        formData.append("file", targetFile);
 
         try {
             const response = await api.post("/datasets/upload", formData, {
@@ -107,10 +96,9 @@ export default function PredictBatch() {
                 },
             });
 
-            const { dataset_id, columns, original_file_type } = response.data;
-            sessionStorage.setItem('uploadFileType', original_file_type);
+            const { dataset_id, original_file_type } = response.data;
+            sessionStorage.setItem("uploadFileType", original_file_type);
             setDatasetId(dataset_id);
-            setColumns(columns);
         } catch (error: any) {
             if (error.response?.status === 401) {
                 toast.error("Session expired. Please sign in again.");
@@ -128,14 +116,12 @@ export default function PredictBatch() {
     const handlePredict = async () => {
         toast.dismiss();
 
-        if (!file) return;
+        if (!file || !datasetId) return;
 
         setIsPredicting(true);
 
         try {
-            const res = await api.post(`/predictions/upload/${datasetId}`, null, {
-                params: { target_column: selectedTarget }
-            });
+            const res = await api.post(`/predictions/upload/${datasetId}`);
 
             const historyId = res.data.batch_prediction_id;
 
@@ -144,7 +130,7 @@ export default function PredictBatch() {
                 type: "batch",
                 created_at: res.data.created_at || new Date().toISOString()
             });
-            
+
             router.push(`/prediction-history/batch/${historyId}`);
         } catch (error: any) {
             if (error.response) {
@@ -159,7 +145,7 @@ export default function PredictBatch() {
                 }
 
                 if (status === 400 && detail?.missing_columns) {
-                    const missing = detail.missing_columns.join(', ');
+                    const missing = detail.missing_columns.join(", ");
                     toast.error(`${t("toast.missingColumns")} ${missing}.`);
                     return;
                 }
@@ -176,8 +162,6 @@ export default function PredictBatch() {
         }
     };
 
-    const inputClass = "w-full p-3 mt-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-indigo-500 outline-none transition-shadow";
-
     return (
         <div className="p-4 h-full flex flex-col">
             <div className="flex justify-between items-start md:items-center flex-col md:flex-row gap-4">
@@ -189,7 +173,7 @@ export default function PredictBatch() {
                 </div>
             </div>
 
-            <div className={`flex flex-col ${!datasetId ? "justify-center" : "justify-start"} align-middle h-full items-center flex-1 my-10`}>
+            <div className="flex flex-col justify-start items-center flex-1 mt-8 mb-10 w-full">
                 <div className="w-full max-w-2xl">
                     {/* Dropzone Area */}
                     <div
@@ -215,7 +199,7 @@ export default function PredictBatch() {
                                 </p>
                                 <input
                                     type="file"
-                                    accept=".csv, application/vnd.openxmlformats-officedocument.spreadsheetml.sheet, application/vnd.ms-excel"
+                                    accept=".csv,.xlsx,.xls,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet,application/vnd.ms-excel"
                                     onChange={handleFileChange}
                                     disabled={isUploading || isPredicting}
                                     ref={fileInputRef}
@@ -226,10 +210,10 @@ export default function PredictBatch() {
                                 </span>
                             </>
                         ) : (
-                            <div className="w-full flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg border border-indigo-200 dark:border-indigo-900/50 shadow-sm">
+                            <div className="w-full flex items-center justify-between bg-white dark:bg-gray-800 p-4 rounded-lg border border-green-200 dark:border-green-900/50 shadow-sm">
                                 <div className="flex items-center space-x-4">
-                                    <div className="p-2 bg-indigo-100 dark:bg-indigo-900/30 rounded-lg">
-                                        <FiFileText className="w-6 h-6 text-indigo-600 dark:text-indigo-400" />
+                                    <div className="p-2 bg-green-100 dark:bg-green-900/30 rounded-lg">
+                                        <FiFileText className="w-6 h-6 text-green-600 dark:text-green-400" />
                                     </div>
                                     <div className="overflow-hidden">
                                         <p className="text-sm font-semibold text-gray-800 dark:text-gray-200 truncate max-w-[200px] sm:max-w-[400px]">
@@ -241,6 +225,9 @@ export default function PredictBatch() {
                                     </div>
                                 </div>
                                 <div className="flex items-center space-x-2">
+                                    {isUploading && (
+                                        <div className="w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full animate-spin mr-2"></div>
+                                    )}
                                     <button
                                         type="button"
                                         onClick={removeFile}
@@ -254,26 +241,18 @@ export default function PredictBatch() {
                         )}
                     </div>
 
-                    {/* Upload Button */}
-                    {file && !datasetId && (
+                    {/* Retry Upload Button if failed */}
+                    {file && !datasetId && !isUploading && (
                         <button
-                            onClick={handleUpload}
-                            disabled={isUploading}
-                            className="mt-6 w-full py-3 flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 disabled:bg-indigo-400 dark:disabled:bg-indigo-800 hover:cursor-pointer text-white font-bold rounded-lg transition-colors shadow-lg disabled:cursor-not-allowed"
+                            onClick={() => handleUpload(file)}
+                            className="mt-6 w-full py-3 flex justify-center items-center gap-2 bg-indigo-600 hover:bg-indigo-700 hover:cursor-pointer text-white font-bold rounded-lg transition-colors shadow-lg"
                         >
-                            {isUploading ? (
-                                <>
-                                    <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"></div>
-                                    {t("uploadBtn.uploading")}
-                                </>
-                            ) : (
-                                t("uploadBtn.upload")
-                            )}
+                            {t("uploadBtn.upload")}
                         </button>
                     )}
 
-                    {/* Dataset Requirements Info */}
-                    {!datasetId && (
+                    {/* Dataset Requirements Info (Show when no file is chosen) */}
+                    {!file && (
                         <div className="mt-6 bg-blue-50 dark:bg-blue-900/20 border border-blue-200 dark:border-blue-800 rounded-xl p-5 shadow-sm mb-10">
                             <div className="flex items-center gap-2 mb-3">
                                 <FiInfo className="text-blue-600 dark:text-blue-400 w-5 h-5" />
@@ -304,60 +283,31 @@ export default function PredictBatch() {
                         </div>
                     )}
 
-                    {/* Prediction Configurations & Submit Button */}
-                    {datasetId && columns.length > 0 && (
-                        <div className="mt-8 mb-10 animate-in fade-in duration-300">
-
-                            {/* Configuration Box */}
-                            <div className="p-6 bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-xl mb-6 shadow-sm">
-                                <h3 className="text-xl font-bold text-gray-900 dark:text-white mb-6 pb-2 border-b border-gray-200 dark:border-gray-700">
-                                    {t("configuration.title")}
-                                </h3>
-
-                                {/* Target Selection (Optional) */}
-                                <div className="mb-6">
-                                    <label htmlFor="target-column" className="block text-base font-semibold text-gray-800 dark:text-gray-200 mb-2">
-                                        {t("configuration.resultColumn")} <span className="text-gray-400 text-sm font-normal ml-1">({t("configuration.optional")})</span>
-                                    </label>
-                                    <select
-                                        id="target-column"
-                                        value={selectedTarget}
-                                        onChange={(e) => setSelectedTarget(e.target.value)}
-                                        className={inputClass}
-                                    >
-                                        <option value="">{t("configuration.none")}</option>
-                                        {columns.map((col, index) => (
-                                            <option key={index} value={col}>{col}</option>
-                                        ))}
-                                    </select>
-                                    <p className="mt-2 text-sm text-gray-500 dark:text-gray-400">
-                                        {t("configuration.description")}
+                    {/* Prediction Action & Notice */}
+                    {datasetId && (
+                        <div className="mt-6 mb-10 w-full animate-in fade-in duration-300">
+                            {/* Notice Info Box */}
+                            <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-xl p-5 mb-6 shadow-xs">
+                                <div className="flex items-center gap-2 mb-2">
+                                    <FiInfo className="text-amber-600 dark:text-amber-400 w-5 h-5 shrink-0" />
+                                    <p className="font-semibold text-amber-900 dark:text-amber-300">
+                                        {t("configuration.systemNotice")}
                                     </p>
                                 </div>
-
-                                {/* Notice Info Box */}
-                                <div className="bg-amber-50 dark:bg-amber-900/20 border border-amber-200 dark:border-amber-800 rounded-lg p-5">
-                                    <div className="flex items-center gap-2 mb-2">
-                                        <FiInfo className="text-amber-600 dark:text-amber-400 w-5 h-5" />
-                                        <p className="font-semibold text-amber-900 dark:text-amber-300">
-                                            {t("configuration.systemNotice")}
-                                        </p>
-                                    </div>
-                                    <p className="text-sm text-amber-800 dark:text-amber-200">
-                                        {t("configuration.noticeDescription")}
-                                    </p>
-                                </div>
+                                <p className="text-sm text-amber-800 dark:text-amber-200">
+                                    {t("configuration.noticeDescription")}
+                                </p>
                             </div>
 
                             {/* Submit Prediction Button */}
                             <button
                                 onClick={handlePredict}
-                                disabled={isPredicting}
-                                className="w-full py-3 flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 dark:disabled:bg-green-800 hover:cursor-pointer text-white font-bold rounded-lg transition-colors shadow-lg disabled:cursor-not-allowed"
+                                disabled={isPredicting || isUploading}
+                                className="w-full py-3.5 flex justify-center items-center gap-2 bg-green-600 hover:bg-green-700 disabled:bg-green-400 dark:disabled:bg-green-800 hover:cursor-pointer text-white font-bold rounded-xl transition-colors shadow-lg disabled:cursor-not-allowed text-base"
                             >
                                 {isPredicting ? (
                                     <>
-                                        <div className="w-5 h-5 border-2 border-t-transparent rounded-full animate-spin"></div>
+                                        <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                         {t("predictBtn.processing")}
                                     </>
                                 ) : (

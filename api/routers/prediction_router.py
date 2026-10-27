@@ -6,20 +6,19 @@ from services.auth_service import require_roles
 from dependencies import get_db
 from sqlalchemy.orm import Session
 from schemas.patient_schema import PatientBase, PatientPredict
-from services.prediction_service import (
+
+from services.prediction_service import predict_dataframe, predict_single, predict_batch
+from services.prediction_history_service import (
     get_predictions_by_user,
     get_prediction_by_id,
     get_batch_predictions_by_user,
     get_batch_prediction_by_id,
     get_unified_prediction_history,
-    predict_dataframe,
-    predict_single,
-    predict_batch,
-    generate_single_xai,
     delete_prediction_by_id,
     delete_predictions_by_user,
     delete_batch_prediction_by_id,
 )
+from services.xai_service import generate_single_xai
 
 router = APIRouter()
 
@@ -86,11 +85,10 @@ def create_batch_prediction(patients: List[PatientBase]):
 @router.post("/upload/{dataset_id}")
 def create_prediction_from_file(
     dataset_id: str,
-    target_column: str = Query(None),
     user=Depends(require_roles(["admin", "user"])),
     db: Session = Depends(get_db),
 ):
-    return predict_dataframe(db, dataset_id, user["user_id"], target_column)
+    return predict_dataframe(db, dataset_id, user["user_id"])
 
 
 @router.post("/xai/on-demand", dependencies=[Depends(require_roles(["admin", "user"]))])

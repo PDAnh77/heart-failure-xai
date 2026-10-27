@@ -6,6 +6,7 @@ import toast from "react-hot-toast";
 import { api } from "@/lib/api";
 import ImageModal from "@/components/modals/imageModal";
 import { DatasetSummary } from "@/types/dataset_summary";
+import { useTranslations } from "next-intl";
 
 interface EdaTabProps {
     datasetId: string;
@@ -15,6 +16,7 @@ interface EdaTabProps {
 }
 
 export default function EDATab({ datasetId, targetColumn, imputation, onProcessed }: EdaTabProps) {
+    const t = useTranslations("edaTab");
     const [summary, setSummary] = useState<DatasetSummary | null>(null);
     const [charts, setCharts] = useState<Record<string, string>>({});
     const [selectedImage, setSelectedImage] = useState<string | null>(null);
@@ -100,7 +102,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                 setImageTimestamp(Date.now());
                 setIsLoadingEda(false);
 
-                toast.success("Analysis completed successfully!");
+                toast.success(t("toast.analysisSuccess"));
             } catch (error: any) {
                 const message =
                     error?.response?.data?.detail?.message ||
@@ -187,7 +189,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
         } catch (error) {
-            toast.error("Failed to download the dataset.");
+            toast.error(t("toast.downloadError"));
         } finally {
             setIsDownloading(false);
         }
@@ -196,28 +198,28 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
     const chartConfigurations = [
         {
             key: "target_distribution",
-            title: "Target distribution",
-            description: "Illustrates the distribution of the target variable. This helps identify if the dataset is balanced or imbalanced, which is crucial for model evaluation."
+            title: t("charts.target_distribution.title"),
+            description: t("charts.target_distribution.desc")
         },
         {
             key: "target_correlation",
-            title: "Target correlation",
-            description: "Shows how strongly each individual numerical feature correlates directly with the target variable, highlighting the most predictive factors."
+            title: t("charts.target_correlation.title"),
+            description: t("charts.target_correlation.desc")
         },
         {
             key: "full_correlation",
-            title: "Feature correlation matrix",
-            description: "Displays the correlation matrix across all features. Distinct colored regions indicate strong relationships, useful for spotting multicollinearity."
+            title: t("charts.full_correlation.title"),
+            description: t("charts.full_correlation.desc")
         },
         {
             key: "anova_score",
-            title: "ANOVA F-Test (Numerical)",
-            description: "Measures the linear dependency between numerical features and the target. Features with higher F-scores are highly informative for the model."
+            title: t("charts.anova_score.title"),
+            description: t("charts.anova_score.desc")
         },
         {
             key: "chi_square_score",
-            title: "Chi-Square (Categorical)",
-            description: "Evaluates the statistical significance of categorical features against the target variable. Higher scores indicate stronger relevance."
+            title: t("charts.chi_square_score.title"),
+            description: t("charts.chi_square_score.desc")
         }
     ];
 
@@ -239,13 +241,13 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                         loading="lazy"
                     />
                     <div className="absolute inset-0 flex items-center justify-center opacity-0 hover:opacity-100 bg-black/10 transition-opacity">
-                        <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-md">Click to expand</span>
+                        <span className="bg-black/50 text-white text-xs px-2 py-1 rounded-md">{t("clickToExpand")}</span>
                     </div>
                 </div>
 
                 <div className="w-full md:w-[55%] flex flex-col justify-center py-2">
                     <div className="inline-flex items-center justify-center px-3 py-1 rounded-full bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400 text-xs font-bold uppercase tracking-wider mb-3 w-fit">
-                        Plot {index + 1}
+                        {t("plotNumber", { number: index + 1 })}
                     </div>
                     <h4 className="font-bold text-xl mb-3 text-gray-800 dark:text-gray-200">{title}</h4>
                     <p className="text-gray-600 dark:text-gray-400 text-sm md:text-base leading-relaxed">
@@ -257,7 +259,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
     };
 
     const renderDataTable = (data: any[], type: 'original' | 'processed', isLoadingMore: boolean, hasMore: boolean) => {
-        if (data.length === 0) return <div className="p-4 text-center text-gray-500">No data available</div>;
+        if (data.length === 0) return <div className="p-4 text-center text-gray-500">{t("table.noData")}</div>;
         const columns = Object.keys(data[0]);
 
         return (
@@ -319,7 +321,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                 {isLoadingMore && (
                     <div className="py-3 flex justify-center items-center bg-white dark:bg-gray-800 border-t border-gray-100 dark:border-gray-700">
                         <div className="w-5 h-5 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                        <span className="text-xs text-gray-500">Loading more rows...</span>
+                        <span className="text-xs text-gray-500">{t("table.loadingMore")}</span>
                     </div>
                 )}
             </div>
@@ -330,24 +332,24 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
         switch (method) {
             case "knn":
                 return {
-                    label: "KNN Imputer",
-                    detail: "Estimates missing values using nearest neighbors in feature space."
+                    label: t("imputation.knn.label"),
+                    detail: t("imputation.knn.detail")
                 };
             case "mice":
                 return {
-                    label: "MICE Imputer",
-                    detail: "Iteratively imputes each feature using the others as predictors."
+                    label: t("imputation.mice.label"),
+                    detail: t("imputation.mice.detail")
                 };
             case "mean":
                 return {
-                    label: "Mean / Mode",
-                    detail: "Uses mean for numerical features and mode for categorical features."
+                    label: t("imputation.mean.label"),
+                    detail: t("imputation.mean.detail")
                 };
             case "default":
             default:
                 return {
-                    label: "Median / Mode",
-                    detail: "Uses median for numerical features and mode for categorical features."
+                    label: t("imputation.default.label"),
+                    detail: t("imputation.default.detail")
                 };
         }
     };
@@ -360,14 +362,14 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                 {isLoadingSummary ? (
                     <div className="flex gap-2 items-center justify-center py-10 rounded-2xl border border-gray-100 dark:border-gray-700">
                         <div className="w-6 h-6 border-2 border-[#4361EE] border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-gray-500 font-medium animate-pulse">Analyzing data structure...</p>
+                        <p className="text-gray-500 font-medium animate-pulse">{t("loading.analyzing")}</p>
                     </div>
                 ) : summary && (
                     <div className="flex flex-col">
 
                         <div className="flex gap-3 mb-4">
                             <FiDatabase className="w-7 h-7 text-[#2EC4B6]" />
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dataset summary</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("summary.title")}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -376,17 +378,17 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 flex flex-col justify-center h-fit">
                                 <div className="flex items-center gap-2 mb-5 font-bold text-gray-800 dark:text-gray-200">
                                     <FiLayers className="w-5 h-5 text-[#4361EE]" />
-                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">Dataset scale</h3>
+                                    <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t("summary.scaleTitle")}</h3>
                                 </div>
 
                                 <div className="flex flex-col gap-4">
                                     <div className="flex gap-4 flex-wrap">
                                         <div className="flex-1 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 flex flex-col justify-center border border-gray-100/50 dark:border-gray-700/50">
-                                            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-1">Total Rows</span>
+                                            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-1">{t("summary.totalRows")}</span>
                                             <span className="text-3xl font-black text-[#4361EE]">{summary.rows.toLocaleString()}</span>
                                         </div>
                                         <div className="flex-1 bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 flex flex-col justify-center border border-gray-100/50 dark:border-gray-700/50">
-                                            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-1">Total Columns</span>
+                                            <span className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-1">{t("summary.totalColumns")}</span>
                                             <span className="text-3xl font-black text-[#9B5DE5]">{summary.columns}</span>
                                         </div>
                                     </div>
@@ -395,7 +397,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                         <div className="w-full bg-gray-50 dark:bg-gray-900/50 rounded-xl p-4 flex items-center justify-between border border-gray-100/50 dark:border-gray-700/50">
                                             <div className="flex flex-col">
                                                 <span className="text-[10px] font-bold text-gray-400 dark:text-gray-400 uppercase tracking-widest mb-1">
-                                                    Cleaned rows
+                                                    {t("summary.cleanedRows")}
                                                 </span>
                                                 <div className="flex items-baseline gap-2">
                                                     <span className="text-3xl font-black text-[#2EC4B6]">
@@ -417,7 +419,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                         <div className="flex flex-wrap items-center justify-between gap-3 mb-2">
                                             <div className="flex items-center gap-2 font-bold text-gray-800 dark:text-gray-200">
                                                 <FiAlertCircle className="w-5 h-5 text-red-600" />
-                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">Data quality</h3>
+                                                <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t("summary.qualityTitle")}</h3>
                                             </div>
                                         </div>
 
@@ -425,10 +427,10 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                         {duplicatesRemoved > 0 && (
                                             <div className="flex items-center justify-between py-3 px-5 bg-orange-50/70 dark:bg-orange-900/10 rounded-xl border border-orange-100 dark:border-orange-800/30">
                                                 <div className="flex items-center gap-3 text-orange-900 dark:text-orange-300 font-semibold">
-                                                    <span>Duplicate rows:</span>
+                                                    <span>{t("summary.duplicateRows")}</span>
                                                 </div>
                                                 <span className="text-orange-600 dark:text-orange-500 font-bold">
-                                                    {duplicatesRemoved} removed
+                                                    {t("summary.duplicatesRemoved", { count: duplicatesRemoved })}
                                                 </span>
                                             </div>
                                         )}
@@ -445,7 +447,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                                                 <span>{key}:</span>
                                                             </div>
                                                             <span className="text-red-500">
-                                                                {val} rows missing
+                                                                {t("summary.rowsMissing", { count: val })}
                                                             </span>
                                                         </div>
                                                     ))}
@@ -453,7 +455,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                         )}
 
                                         <div className="text-sm text-gray-500 dark:text-gray-400">
-                                            * Data integrity scan identified inconsistencies. Automated cleanup applied where possible.
+                                            {t("summary.integrityScan")}
                                         </div>
                                     </div>
                                 ) : (
@@ -461,15 +463,15 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                     <>
                                         <div className="flex items-center gap-2 mb-4 font-semibold text-lg">
                                             <FiAlertCircle className="w-5 h-5" />
-                                            <span>Data quality</span>
+                                            <span>{t("summary.qualityTitle")}</span>
                                         </div>
                                         <div className="flex items-center gap-5 mt-2">
                                             <div className="w-12 h-12 rounded-full bg-[#2EC4B6]/15 flex items-center justify-center shrink-0">
                                                 <FiCheck className="w-6 h-6 text-[#2EC4B6]" strokeWidth={3} />
                                             </div>
                                             <div className="z-10">
-                                                <h4 className="text-xl font-bold text-[#1f8c82] dark:text-[#2EC4B6] mb-1">Perfect data integrity</h4>
-                                                <p className="text-sm text-gray-500 dark:text-gray-400">No missing values or duplicates were detected in the dataset.</p>
+                                                <h4 className="text-xl font-bold text-[#1f8c82] dark:text-[#2EC4B6] mb-1">{t("summary.perfectIntegrity")}</h4>
+                                                <p className="text-sm text-gray-500 dark:text-gray-400">{t("summary.perfectIntegrityDesc")}</p>
                                             </div>
                                         </div>
                                     </>
@@ -485,7 +487,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center">
                                         <div className="w-1.5 h-6 bg-[#4361EE] rounded-full mr-3"></div>
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Numerical features</h3>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t("summary.numericalFeatures")}</h3>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-3">
@@ -503,7 +505,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                 <div className="flex items-center justify-between mb-6">
                                     <div className="flex items-center">
                                         <div className="w-1.5 h-6 bg-[#9B5DE5] rounded-full mr-3"></div>
-                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">Categorical features</h3>
+                                        <h3 className="text-lg font-bold text-gray-900 dark:text-white">{t("summary.categoricalFeatures")}</h3>
                                     </div>
                                 </div>
                                 <div className="flex flex-wrap gap-3">
@@ -524,13 +526,13 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                 {isLoadingPreprocess ? (
                     <div className="flex gap-2 items-center justify-center py-12 rounded-2xl border border-gray-100 dark:border-gray-700">
                         <div className="w-6 h-6 border-2 border-[#2EC4B6] border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-gray-500 font-medium animate-pulse">Optimizing and preparing dataset...</p>
+                        <p className="text-gray-500 font-medium animate-pulse">{t("loading.optimizing")}</p>
                     </div>
                 ) : processedId && (
                     <div className="mb-8">
                         <div className="flex gap-3 mb-4">
                             <FiGrid className="w-7 h-7 text-[#2EC4B6]" />
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Dataset comparison</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("comparison.title")}</h2>
                         </div>
 
                         <div className="px-0 md:px-6 space-y-10">
@@ -539,7 +541,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                                        <span className="w-3 h-3 rounded-full bg-gray-400"></span> Original data
+                                        <span className="w-3 h-3 rounded-full bg-gray-400"></span> {t("comparison.originalTitle")}
                                     </h3>
                                 </div>
 
@@ -552,23 +554,23 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                     {/* Vùng Thông tin (Chiếm 1/3) */}
                                     <div className="bg-gray-50 dark:bg-gray-800/50 p-5 rounded-xl border border-gray-200 dark:border-gray-700 h-fit">
                                         <h4 className="font-semibold text-gray-800 dark:text-gray-200 mb-3 text-base border-b border-gray-200 dark:border-gray-700 pb-2">
-                                            About original dataset
+                                            {t("comparison.aboutOriginalTitle")}
                                         </h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
-                                            This is your raw, untouched dataset exactly as it was uploaded. It serves as the baseline to verify the integrity of the automated preprocessing steps.
+                                            {t("comparison.aboutOriginalDesc")}
                                         </p>
                                         <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                                             <li className="flex items-start gap-2">
                                                 <span className="text-gray-400">•</span>
-                                                <span><strong>Raw format:</strong> Features retain their original scales, string text, and categorical labels.</span>
+                                                <span><strong>{t("comparison.rawFormatLabel")}</strong> {t("comparison.rawFormatDesc")}</span>
                                             </li>
                                             <li className="flex items-start gap-2">
                                                 <span className="text-gray-400">•</span>
-                                                <span><strong>Potential issues:</strong> May contain duplicate rows, missing values (NaN/Null), or unencoded variables.</span>
+                                                <span><strong>{t("comparison.potentialIssuesLabel")}</strong> {t("comparison.potentialIssuesDesc")}</span>
                                             </li>
                                             <li className="flex items-start gap-2">
                                                 <span className="text-gray-400">•</span>
-                                                <span><strong>Algorithm readiness:</strong> Not yet optimized for training machine learning models.</span>
+                                                <span><strong>{t("comparison.readinessLabel")}</strong> {t("comparison.readinessDesc")}</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -579,7 +581,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                             <div className="space-y-4">
                                 <div className="flex items-center justify-between">
                                     <h3 className="text-lg font-bold text-gray-800 dark:text-gray-200 flex items-center gap-2">
-                                        <span className="w-3 h-3 rounded-full bg-[#2EC4B6]"></span> Preprocessed data
+                                        <span className="w-3 h-3 rounded-full bg-[#2EC4B6]"></span> {t("comparison.processedTitle")}
                                     </h3>
 
                                     <button
@@ -588,7 +590,7 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                         className="flex items-center hover:cursor-pointer justify-center min-w-[180px] gap-2 px-4 py-2 bg-linear-to-r from-[#2EC4B6] to-[#25a095] text-white text-sm font-medium rounded-lg shadow-sm hover:shadow-md hover:from-[#25a095] hover:to-[#1e8278] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:shadow-sm disabled:hover:from-[#2EC4B6] disabled:hover:to-[#25a095]"
                                     >
                                         <FiDownload className="w-4 h-4" />
-                                        {isDownloading ? "Downloading..." : "Download dataset"}
+                                        {isDownloading ? t("comparison.downloading") : t("comparison.downloadBtn")}
                                     </button>
                                 </div>
 
@@ -601,27 +603,27 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                                     {/* Vùng Thông tin (Chiếm 1/3) */}
                                     <div className="bg-[#2EC4B6]/5 dark:bg-[#2EC4B6]/10 p-5 rounded-xl border border-[#2EC4B6]/20 dark:border-[#2EC4B6]/30 h-fit">
                                         <h4 className="font-semibold text-[#1f8c82] dark:text-[#2EC4B6] mb-3 text-base border-b border-[#2EC4B6]/20 pb-2">
-                                            About preprocessed dataset
+                                            {t("comparison.aboutProcessedTitle")}
                                         </h4>
                                         <p className="text-sm text-gray-600 dark:text-gray-300 mb-4 leading-relaxed">
-                                            The dataset has been automatically cleaned and standardized through our pipeline to ensure optimal model performance:
+                                            {t("comparison.aboutProcessedDesc")}
                                         </p>
                                         <ul className="text-sm text-gray-600 dark:text-gray-300 space-y-2">
                                             <li className="flex items-start gap-2">
                                                 <span className="text-[#2EC4B6] font-bold">✓</span>
-                                                <span><strong>Data cleaning:</strong> Dropped rows with missing target values and removed exact duplicates to prevent bias.</span>
+                                                <span><strong>{t("comparison.cleaningLabel")}</strong> {t("comparison.cleaningDesc")}</span>
                                             </li>
                                             <li className="flex items-start gap-2">
                                                 <span className="text-[#2EC4B6] font-bold">✓</span>
-                                                <span><strong>Imputation:</strong> <em>{getImputationInfo(imputation).label}</em> - {getImputationInfo(imputation).detail}</span>
+                                                <span><strong>{t("comparison.imputationLabel")}</strong> <em>{getImputationInfo(imputation).label}</em> - {getImputationInfo(imputation).detail}</span>
                                             </li>
                                             <li className="flex items-start gap-2">
                                                 <span className="text-[#2EC4B6] font-bold">✓</span>
-                                                <span><strong>Encoding:</strong> Applied <em>Label Encoding</em> to convert categorical strings into machine-readable numbers.</span>
+                                                <span><strong>{t("comparison.encodingLabel")}</strong> {t("comparison.encodingDesc")}</span>
                                             </li>
                                             <li className="flex items-start gap-2">
                                                 <span className="text-[#2EC4B6] font-bold">✓</span>
-                                                <span><strong>Scaling:</strong> Used <em>Standard Scaler</em> on numerical features to ensure equal contribution across variables (Mean=0, Variance=1).</span>
+                                                <span><strong>{t("comparison.scalingLabel")}</strong> {t("comparison.scalingDesc")}</span>
                                             </li>
                                         </ul>
                                     </div>
@@ -635,13 +637,13 @@ export default function EDATab({ datasetId, targetColumn, imputation, onProcesse
                 {isLoadingEda ? (
                     <div className="flex gap-2 items-center justify-center py-16 rounded-2xl border border-gray-100 dark:border-gray-700">
                         <div className="w-6 h-6 border-2 border-[#9B5DE5] border-t-transparent rounded-full animate-spin"></div>
-                        <p className="text-gray-500 font-medium animate-pulse">Generating analytical charts...</p>
+                        <p className="text-gray-500 font-medium animate-pulse">{t("loading.generatingCharts")}</p>
                     </div>
                 ) : Object.keys(charts).length > 0 && (
                     <div className="mx-auto w-full mb-6">
                         <div className="flex items-center gap-3 my-4">
                             <FiPieChart className="w-7 h-7 text-[#4361EE]" />
-                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">Exploratory data analysis</h2>
+                            <h2 className="text-2xl font-bold text-gray-900 dark:text-white">{t("charts.header")}</h2>
                         </div>
 
                         <div className="grid grid-cols-1 gap-6 px-6">

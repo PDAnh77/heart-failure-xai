@@ -20,7 +20,6 @@ export default function BatchHistoryDetailPage() {
     const [originalFileType, setOriginalFileType] = useState<string>("csv");
     const [isDownloading, setIsDownloading] = useState(false);
     const [createdAt, setCreatedAt] = useState<string | null>(null);
-    const [targetColumn, setTargetColumn] = useState<string | null>(null);
 
     // States for Infinite Scroll
     const [patients, setPatients] = useState<PatientRow[]>([]);
@@ -64,14 +63,12 @@ export default function BatchHistoryDetailPage() {
                     setCreatedAt(data.created_at);
                 }
 
-                setTargetColumn(data.target_column ?? null);
 
                 const formattedData: BatchResult = {
                     file_id: data.result_dataset_id,
                     summary: data.summary,
                     batch_shap_bar: data.batch_xai.batch_shap_bar,
                     batch_shap_beeswarm: data.batch_xai.batch_shap_beeswarm,
-                    target_column: data.target_column ?? null
                 };
 
                 setResultData(formattedData);
@@ -203,12 +200,9 @@ export default function BatchHistoryDetailPage() {
 
     const { summary, batch_shap_bar, batch_shap_beeswarm, file_id } = resultData;
 
-    const samplePatient = patients[0] || {};
-    const inferredResultKey = Object.keys(samplePatient).find(k => k.includes('prediction_result')) || "prediction_result";
-    const inferredProbabilityKey = Object.keys(samplePatient).find(k => k.includes('prediction_probability')) || "prediction_probability";
-    const resultKey = targetColumn || inferredResultKey;
-    const probabilityKey = targetColumn ? `${targetColumn}_prediction_probability` : inferredProbabilityKey;
-    const hiddenKeys = new Set([resultKey, probabilityKey, "prediction_result", "prediction_probability"]);
+    const resultKey = "prediction_result";
+    const probabilityKey = "prediction_probability";
+    const hiddenKeys = new Set([resultKey, probabilityKey]);
 
     const formatDateTime = (dateString: string | null) => {
         if (!dateString) return "";

@@ -9,6 +9,10 @@ import { api } from "@/lib/api";
 import toast from "react-hot-toast";
 import { EvalResult, FSResult } from "@/types/feature_selection";
 import ImageModal from "../modals/imageModal";
+import MetricCompare from "../ui/metricCompare";
+import CustomSelect from "../ui/customSelect";
+import { getFeatureSelectionModelOptions, isLocalEnvironment } from "@/lib/env";
+import { useTranslations } from "next-intl";
 
 interface FeatureSelectionTabProps {
     targetColumn: string;
@@ -18,15 +22,16 @@ interface FeatureSelectionTabProps {
     testSize: number;
     nParents?: number;
     balancing: string;
+    modelName?: string;
 }
 
-const LOADING_MESSAGES = [
-    "Preparing and validating dataset...",
-    "Analyzing feature relevance...",
-    "Exploring potential feature combinations...",
-    "Evaluating model performance across selections...",
-    "Finalizing the most impactful feature set..."
-];
+
+
+
+
+
+
+
 
 const formatModelName = (modelKey: string) => {
     const modelMap: Record<string, string> = {
@@ -48,8 +53,19 @@ export default function FeatureSelectionTab({
     mutationRate,
     testSize,
     nParents,
-    balancing
+    balancing,
+    modelName = "decision_tree"
 }: FeatureSelectionTabProps) {
+    const t = useTranslations("featureSelectionTab");
+    const loadingMessages = useMemo(() => [
+        t("loadingMessages.0"),
+        t("loadingMessages.1"),
+        t("loadingMessages.2"),
+        t("loadingMessages.3"),
+        t("loadingMessages.4")
+    ], [t]);
+    const pollInterval = useRef<NodeJS.Timeout | null>(null);
+    const evalPollInterval = useRef<NodeJS.Timeout | null>(null);
     // UI States
     const [isLoading, setIsLoading] = useState(true);
     const [loadingMessageIdx, setLoadingMessageIdx] = useState(0);
@@ -63,6 +79,12 @@ export default function FeatureSelectionTab({
     const [localMutationRate, setLocalMutationRate] = useState<number>(mutationRate);
     const [localTestSize, setLocalTestSize] = useState<number>(testSize);
     const [localNParents, setLocalNParents] = useState<number | string>(nParents ?? "");
+    const [isLocal, setIsLocal] = useState<boolean>(false);
+    useEffect(() => { setIsLocal(isLocalEnvironment()); }, []);
+
+    const [localModel, setLocalModel] = useState<string>(
+        modelName && (modelName !== "random_forest" || isLocalEnvironment()) ? modelName : "decision_tree"
+    );
 
     // --- State evaluation ---
     const [evalResult, setEvalResult] = useState<EvalResult | null>(null);
@@ -77,33 +99,74 @@ export default function FeatureSelectionTab({
         balancing.toLowerCase() === "yes" ? "adasyn" : (balancing.toLowerCase() || "none")
     );
 
+    useEffect(() => {
+        return () => {
+            if (pollInterval.current) clearInterval(pollInterval.current);
+            if (evalPollInterval.current) clearInterval(evalPollInterval.current);
+        };
+    }, []);
+
     // Rotate loading message every 5 seconds
     useEffect(() => {
         let interval: NodeJS.Timeout;
         if (isLoading) {
             interval = setInterval(() => {
-                setLoadingMessageIdx((prev) => (prev + 1) % LOADING_MESSAGES.length);
+                setLoadingMessageIdx((prev) => (prev + 1) % loadingMessages.length);
             }, 5000);
         }
         return () => clearInterval(interval);
-    }, [isLoading]);
+    }, [isLoading, loadingMessages]);
 
     const fetchEvaluation = async (fsDatasetId: string) => {
         setIsEvalLoading(true);
         try {
-            const res = await api.get(`/datasets/${processedId}/feature-selection-evaluation`, {
+            const startRes = await api.post(`/datasets/${processedId}/feature-selection-evaluation`, null, {
                 params: {
                     fs_dataset_id: fsDatasetId,
                     target_column: targetColumn,
-                    test_size: localTestSize
+                    test_size: localTestSize,
+                    balancing_method: localBalancing,
+                    model_name: localModel
                 }
             });
-            setEvalResult(res.data);
-            setLimeRowIndex(0);
-            await fetchLime(fsDatasetId, 0);
+
+            const taskId = startRes.data.task_id;
+
+            // Xóa interval cũ nếu có
+            if (evalPollInterval.current) clearInterval(evalPollInterval.current);
+
+            // Kiểm tra trạng thái mỗi 3s
+            evalPollInterval.current = setInterval(async () => {
+                try {
+                    const statusRes = await api.get(`/datasets/feature-selection/status/${taskId}`);
+                    const taskStatus = statusRes.data.status;
+
+                    if (taskStatus === "COMPLETED") {
+                        clearInterval(evalPollInterval.current!);
+
+                        // Lấy kết quả lưu vào state
+                        setEvalResult(statusRes.data.result);
+                        setIsEvalLoading(false);
+
+                        // Sinh đồ thị LIME sau khi Evaluation tải xong
+                        setLimeRowIndex(0);
+                        await fetchLime(fsDatasetId, 0);
+
+                    } else if (taskStatus === "FAILED") {
+                        clearInterval(evalPollInterval.current!);
+                        toast.error(statusRes.data.error || t("toast.evalFailed"));
+                        setIsEvalLoading(false);
+                    }
+
+                } catch (err) {
+                    clearInterval(evalPollInterval.current!);
+                    toast.error(t("toast.evalConnectionLost"));
+                    setIsEvalLoading(false);
+                }
+            }, 3000);
+
         } catch (error) {
-            toast.error("Could not load deep evaluation metrics.");
-        } finally {
+            toast.error(t("toast.evalStartFailed"));
             setIsEvalLoading(false);
         }
     };
@@ -116,7 +179,8 @@ export default function FeatureSelectionTab({
                     fs_dataset_id: fsDatasetId,
                     target_column: targetColumn,
                     instance_idx: rowIndex,
-                    test_size: localTestSize
+                    test_size: localTestSize,
+                    model_name: localModel
                 }
             });
             setEvalResult(prev => {
@@ -130,7 +194,7 @@ export default function FeatureSelectionTab({
                 };
             });
         } catch (error: any) {
-            toast.error(error.response?.data?.detail || "Failed to generate LIME explanations.");
+            toast.error(error.response?.data?.detail || t("toast.limeFailed"));
         } finally {
             setIsLimeLoading(false);
         }
@@ -150,34 +214,72 @@ export default function FeatureSelectionTab({
                 mutation_rate: localMutationRate,
                 test_size: localTestSize,
                 balancing_method: localBalancing,
+                model_name: localModel,
             };
 
             if (localNParents !== "" && localNParents !== undefined) {
                 requestParams.n_parents = Number(localNParents);
             }
 
-            const res = await api.get(`/datasets/${processedId}/feature-selection`, {
+            const startRes = await api.post(`/datasets/${processedId}/feature-selection`, null, {
                 params: requestParams
             });
 
-            setResult(res.data);
+            const taskId = startRes.data.task_id;
 
-            if (isManualRerun) {
-                toast.success("Feature selection rerun completed successfully!");
-            } else {
-                toast.success("Feature selection completed successfully!");
+            if (!taskId) {
+                throw new Error("No task_id returned from server");
             }
 
-            if (res.data.fs_dataset_id) {
-                fetchEvaluation(res.data.fs_dataset_id);
-            }
+            // Xóa interval cũ nếu có để tránh chạy đè
+            if (pollInterval.current) clearInterval(pollInterval.current);
+
+            // KIỂM TRA TRẠNG THÁI MỖI 3 GIÂY
+            pollInterval.current = setInterval(async () => {
+                try {
+                    const statusRes = await api.get(`/datasets/feature-selection/status/${taskId}`);
+                    const taskStatus = statusRes.data.status;
+
+                    if (taskStatus === "COMPLETED") {
+                        // Dừng kiểm tra status
+                        clearInterval(pollInterval.current!);
+
+                        // Lấy kết quả thực sự nằm trong trường "result" trả về
+                        const finalResult = statusRes.data.result;
+                        setResult(finalResult);
+
+                        setIsLoading(false);
+
+                        if (isManualRerun) {
+                            toast.success(t("toast.rerunSuccess"));
+                        } else {
+                            toast.success(t("toast.runSuccess"));
+                        }
+
+                        // Chạy tiếp bước Evaluate
+                        if (finalResult.fs_dataset_id) {
+                            fetchEvaluation(finalResult.fs_dataset_id);
+                        }
+                    } else if (taskStatus === "FAILED") {
+                        clearInterval(pollInterval.current!);
+                        toast.error(statusRes.data.error || t("toast.runFailed"));
+                        setIsLoading(false);
+                    }
+                    // Nếu status là "PROCESSING" hoặc "PENDING", không làm gì cả, interval sẽ tiếp tục chạy sau 3 giây.
+
+                } catch (err) {
+                    clearInterval(pollInterval.current!);
+                    toast.error(t("toast.lostConnection"));
+                    setIsLoading(false);
+                }
+            }, 3000);
+
         } catch (error) {
-            toast.error("Feature selection failed. Please check your parameters.");
-        } finally {
+            toast.error(t("toast.startFailed"));
             setIsLoading(false);
             setEvalResult(null);
         }
-    }, [processedId, targetColumn, localSize, localMutationRate, localTestSize, localNParents, localBalancing]);
+    }, [processedId, targetColumn, localSize, localMutationRate, localTestSize, localNParents, localBalancing, localModel]);
 
     // Initial API call when component mounts
     useEffect(() => {
@@ -190,28 +292,28 @@ export default function FeatureSelectionTab({
     // --- Validation Logic before Rerun ---
     const handleRerun = () => {
         if (localSize < 10 || localSize > 200) {
-            toast.error("Population size must be between 10 and 200.");
+            toast.error(t("toast.invalidSize"));
             return;
         }
 
         if (localMutationRate < 0.01 || localMutationRate > 0.5) {
-            toast.error("Mutation rate must be between 0.01 and 0.5.");
+            toast.error(t("toast.invalidMutationRate"));
             return;
         }
 
         if (localTestSize < 0.1 || localTestSize > 0.5) {
-            toast.error("Test size must be between 0.1 and 0.5.");
+            toast.error(t("toast.invalidTestSize"));
             return;
         }
 
         if (localNParents !== "") {
             const parsedParents = Number(localNParents);
             if (parsedParents <= 0) {
-                toast.error("Number of parents must be greater than 0.");
+                toast.error(t("toast.invalidNParentsMin"));
                 return;
             }
             if (parsedParents >= localSize) {
-                toast.error("Number of parents must be less than Population size.");
+                toast.error(t("toast.invalidNParentsMax"));
                 return;
             }
         }
@@ -221,7 +323,7 @@ export default function FeatureSelectionTab({
 
     const handleDownload = async () => {
         if (!result?.fs_dataset_id) {
-            toast.error("Dataset ID not available");
+            toast.error(t("toast.datasetIdMissing"));
             return;
         }
 
@@ -245,7 +347,7 @@ export default function FeatureSelectionTab({
             document.body.removeChild(link);
             window.URL.revokeObjectURL(url);
         } catch (error) {
-            toast.error("Failed to download dataset");
+            toast.error(t("toast.downloadFailed"));
         } finally {
             setIsDownloading(false);
         }
@@ -253,37 +355,23 @@ export default function FeatureSelectionTab({
 
     const handleGenerateLime = async () => {
         if (!result?.fs_dataset_id || !processedId || !targetColumn) {
-            toast.error("Evaluation data not ready.");
+            toast.error(t("toast.evalNotReady"));
             return;
         }
         if (limeRowIndex < 0) {
-            toast.error("Row index must be 0 or greater.");
+            toast.error(t("toast.invalidRowIndex"));
             return;
         }
         await fetchLime(result.fs_dataset_id, limeRowIndex);
     };
+
+    const accuracyDiff = ((result?.best_ga_accuracy || 0) - (result?.baseline_accuracy || 0)) * 100;
 
     const inputClass = "w-full p-2 mt-1 border border-gray-300 dark:border-gray-600 rounded-lg bg-gray-50 dark:bg-gray-900 text-gray-900 dark:text-white focus:ring-2 focus:ring-[#4361EE] outline-none transition-shadow";
 
     // Extract balancing info returned from backend (shape: { method, before?, after?, skipped? })
     // Use only when the returned `method` matches the current `localBalancing` selection
     const balancingStats = result?.balancing && result.balancing.method === localBalancing ? result.balancing : null;
-
-    const MetricCompare = ({ label, before, after }: { label: string, before: number, after: number }) => {
-        const isBetter = after >= before;
-        return (
-            <div className="flex flex-col items-center p-3 bg-gray-50 dark:bg-gray-900/50 rounded-xl border border-gray-100 dark:border-gray-800">
-                <span className="text-xs font-bold text-gray-500 uppercase">{label}</span>
-                <div className="mt-2 flex items-center gap-3">
-                    <span className="text-lg font-medium text-gray-400">{(before * 100).toFixed(1)}%</span>
-                    <span className="text-gray-300 dark:text-gray-600">→</span>
-                    <span className={`text-xl font-bold ${isBetter ? 'text-[#4361EE] dark:text-indigo-300' : 'text-red-500'}`}>
-                        {(after * 100).toFixed(1)}%
-                    </span>
-                </div>
-            </div>
-        );
-    };
 
     const timestamp = useMemo(() => Date.now(), [evalResult]);
 
@@ -295,15 +383,12 @@ export default function FeatureSelectionTab({
                         <div className="flex items-center gap-3 mb-6">
                             <div className="w-8 h-8 border-2 border-[#4361EE] border-t-transparent rounded-full animate-spin"></div>
                             <h3 className="text-2xl font-bold text-gray-800 dark:text-gray-200">
-                                Running feature selection
+                                {t("running")}
                             </h3>
                         </div>
 
                         <p className="text-[#4361EE] font-medium text-lg animate-pulse transition-all duration-500 text-center px-4">
-                            {LOADING_MESSAGES[loadingMessageIdx]}
-                        </p>
-                        <p className="text-sm text-gray-400 mt-6 bg-gray-50 dark:bg-gray-800 px-4 py-2 rounded-lg">
-                            This process may take 20-30 seconds. Please do not close the browser.
+                            {loadingMessages[loadingMessageIdx]}
                         </p>
                     </div>
                 ) : (
@@ -312,10 +397,10 @@ export default function FeatureSelectionTab({
                         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
                             <div>
                                 <h2 className="text-xl font-bold text-gray-900 dark:text-white">
-                                    Feature selection results (Genetic algorithm)
+                                    {t("title")}
                                 </h2>
                                 <p className="text-sm text-gray-500 dark:text-gray-400 mt-1.5 max-w-2xl">
-                                    The algorithm has identified the most predictive subset of features. This helps in reducing dimensionality, preventing overfitting, and improving model training efficiency.
+                                    {t("subtitle")}
                                 </p>
                             </div>
 
@@ -325,7 +410,7 @@ export default function FeatureSelectionTab({
                                 className="flex items-center hover:cursor-pointer justify-center shrink-0 min-w-[200px] gap-2 px-5 py-2.5 bg-linear-to-r from-[#4361EE] to-[#3a52d5] text-white font-semibold rounded-xl shadow-md hover:shadow-lg hover:from-[#3a52d5] hover:to-[#2e41b0] transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 <FiDownload className="text-lg" />
-                                {isDownloading ? "Downloading..." : "Download dataset"}
+                                {isDownloading ? t("downloading") : t("downloadBtn")}
                             </button>
                         </div>
 
@@ -335,7 +420,7 @@ export default function FeatureSelectionTab({
                             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-[#1A535C] transition-colors relative flex flex-col">
                                 <div className="flex justify-between items-start">
                                     <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Best accuracy
+                                        {t("stats.bestAccuracy")}
                                     </p>
                                     <div className="w-10 h-10 bg-[#1A535C]/10 rounded-full flex items-center justify-center shrink-0">
                                         <FaCheckCircle className="text-xl text-[#1A535C] dark:text-teal-400" />
@@ -352,7 +437,8 @@ export default function FeatureSelectionTab({
                                 <div className="mt-4 flex items-center gap-1.5 text-sm font-bold text-[#1A535C] dark:text-teal-400">
                                     <FiTrendingUp className="text-base" />
                                     <span>
-                                        +{(((result?.best_ga_accuracy || 0) - (result?.baseline_accuracy || 0)) * 100).toFixed(2)}% vs Baseline
+                                        {accuracyDiff > 0 ? '+' : ''}
+                                        {accuracyDiff.toFixed(2)}% {t("stats.vsBaseline")}
                                     </span>
                                 </div>
                             </div>
@@ -361,7 +447,7 @@ export default function FeatureSelectionTab({
                             <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl shadow-sm border border-gray-100 dark:border-gray-700 hover:border-[#4361EE] transition-colors relative flex flex-col">
                                 <div className="flex justify-between items-start">
                                     <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                        Feature count
+                                        {t("stats.featureCount")}
                                     </p>
                                     <div className="w-10 h-10 bg-[#4361EE]/10 rounded-full flex items-center justify-center shrink-0">
                                         <FaFilter className="text-xl text-[#4361EE]" />
@@ -373,14 +459,14 @@ export default function FeatureSelectionTab({
                                         {result?.feature_count}
                                     </p>
                                     <span className="text-lg font-medium text-gray-600 dark:text-gray-400">
-                                        Selected
+                                        {t("stats.selected")}
                                     </span>
                                 </div>
 
                                 <div className="mt-4 flex items-center gap-1.5 text-sm font-medium text-gray-500 dark:text-gray-400">
                                     <FiInfo className="text-base" />
                                     <span>
-                                        Reduced from {result?.original_feature_count} initial features
+                                        {t("stats.reducedFrom", { count: result?.original_feature_count ?? 0 })}
                                     </span>
                                 </div>
                             </div>
@@ -392,7 +478,7 @@ export default function FeatureSelectionTab({
 
                             <div className="flex justify-between items-center mb-2">
                                 <p className="text-sm font-bold text-gray-500 dark:text-gray-400 uppercase tracking-wider">
-                                    Data Balancing: <span className="text-black dark:text-white ml-1">{localBalancing === "none" ? "None" : localBalancing}</span>
+                                    {t("stats.dataBalancing")} <span className="text-black dark:text-white ml-1">{localBalancing === "none" ? t("stats.none") : localBalancing.toUpperCase()}</span>
                                 </p>
                                 <div className="w-10 h-10 bg-purple-500/10 rounded-full flex items-center justify-center shrink-0">
                                     <FaBalanceScale className="text-xl text-purple-600 dark:text-purple-400" />
@@ -401,31 +487,31 @@ export default function FeatureSelectionTab({
 
                             <div className="flex-1 flex flex-col justify-center">
                                 {localBalancing === "none" ? (
-                                    <p className="text-gray-500 font-medium">Dataset used as-is. No balancing applied.</p>
+                                    <p className="text-gray-500 font-medium">{t("stats.noBalancingDesc")}</p>
                                 ) : balancingStats?.skipped ? (
                                     <div className="bg-orange-50 dark:bg-orange-900/10 p-3 rounded-xl border border-orange-100 dark:border-orange-800/30">
-                                        <p className="text-sm font-bold text-orange-600 dark:text-orange-400 uppercase mb-1">Skipped</p>
+                                        <p className="text-sm font-bold text-orange-600 dark:text-orange-400 uppercase mb-1">{t("stats.skipped")}</p>
                                         <p className="text-sm text-orange-700 dark:text-orange-300">{balancingStats.skipped}</p>
                                     </div>
                                 ) : balancingStats?.before && balancingStats?.after ? (
                                     <div className="grid grid-cols-2 gap-4 text-sm">
                                         <div className="bg-gray-50 dark:bg-gray-900/50 p-3 rounded-xl border border-gray-100 dark:border-gray-800">
-                                            <p className="font-bold text-gray-500 uppercase mb-2 border-b border-gray-200 dark:border-gray-700 pb-1.5">Original</p>
+                                            <p className="font-bold text-gray-500 uppercase mb-2 border-b border-gray-200 dark:border-gray-700 pb-1.5">{t("stats.original")}</p>
                                             <div className="space-y-2">
                                                 {Object.entries(balancingStats.before).map(([cls, count]) => (
                                                     <div key={cls} className="flex justify-between text-gray-700 dark:text-gray-300">
-                                                        <span>Class {cls}:</span>
+                                                        <span>{t("stats.classLabel", { cls })}</span>
                                                         <span className="font-mono font-bold">{count as number}</span>
                                                     </div>
                                                 ))}
                                             </div>
                                         </div>
                                         <div className="bg-purple-50 dark:bg-purple-900/10 p-3 rounded-xl border border-purple-100 dark:border-purple-800/30">
-                                            <p className="font-bold text-purple-500 uppercase mb-2 border-b border-purple-200 dark:border-purple-800/30 pb-1.5">Balanced</p>
+                                            <p className="font-bold text-purple-500 uppercase mb-2 border-b border-purple-200 dark:border-purple-800/30 pb-1.5">{t("stats.balanced")}</p>
                                             <div className="space-y-2">
                                                 {Object.entries(balancingStats.after).map(([cls, count]) => (
                                                     <div key={cls} className="flex justify-between text-purple-700 dark:text-purple-300">
-                                                        <span>Class {cls}:</span>
+                                                        <span>{t("stats.classLabel", { cls })}</span>
                                                         <span className="font-mono font-bold">{count as number}</span>
                                                     </div>
                                                 ))}
@@ -433,7 +519,7 @@ export default function FeatureSelectionTab({
                                         </div>
                                     </div>
                                 ) : (
-                                    <p className="text-base text-gray-500 font-medium italic">Processing results...</p>
+                                    <p className="text-base text-gray-500 font-medium italic">{t("stats.processingResults")}</p>
                                 )}
                             </div>
                         </div>
@@ -443,7 +529,7 @@ export default function FeatureSelectionTab({
                             <div className="py-4 px-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center gap-2">
                                 <FaStar className="text-[#4361EE] text-xl" />
                                 <h3 className="font-bold text-gray-800 dark:text-gray-200">
-                                    Optimal feature subset
+                                    {t("optimalSubset")}
                                 </h3>
                             </div>
                             <div className="p-6">
@@ -465,7 +551,7 @@ export default function FeatureSelectionTab({
                             <div className="py-4 px-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center justify-between">
                                 <div className="flex items-center gap-2">
                                     <FiBarChart2 className="text-[#4361EE] text-xl" />
-                                    <h3 className="font-bold text-gray-800 dark:text-gray-200">Impact evaluation</h3>
+                                    <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("evaluation.title")}</h3>
                                 </div>
                             </div>
 
@@ -473,7 +559,7 @@ export default function FeatureSelectionTab({
                                 {isEvalLoading ? (
                                     <div className="h-64 flex items-center justify-center gap-2 bg-gray-50 dark:bg-gray-900/20 rounded-xl border border-dashed border-gray-200 dark:border-gray-700">
                                         <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-                                        <p className="text-gray-500">Please wait while we evaluate the selected features...</p>
+                                        <p className="text-gray-500">{t("evaluation.loading")}</p>
                                     </div>
                                 ) : evalResult ? (
                                     <div className="space-y-4">
@@ -482,16 +568,35 @@ export default function FeatureSelectionTab({
                                             <div className="flex flex-col gap-4 lg:col-span-1">
                                                 {/* Model Evaluated Box */}
                                                 <div className="flex flex-col items-center p-3 bg-blue-50 dark:bg-blue-900/20 rounded-xl border border-blue-100 dark:border-blue-800/30">
-                                                    <span className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">Model Using</span>
+                                                    <span className="text-xs font-bold text-blue-500 dark:text-blue-400 uppercase tracking-wider">{t("evaluation.modelUsing")}</span>
                                                     <span className="mt-2 text-lg font-bold text-gray-800 dark:text-gray-200">
                                                         {formatModelName(evalResult.model_evaluated)}
                                                     </span>
                                                 </div>
 
-                                                <MetricCompare label="Accuracy" before={evalResult.metrics_before.accuracy} after={evalResult.metrics_after.accuracy} />
-                                                <MetricCompare label="Recall (Sensitivity)" before={evalResult.metrics_before.recall} after={evalResult.metrics_after.recall} />
-                                                <MetricCompare label="Precision" before={evalResult.metrics_before.precision} after={evalResult.metrics_after.precision} />
-                                                <MetricCompare label="F1-Score" before={evalResult.metrics_before.f1_score} after={evalResult.metrics_after.f1_score} />
+                                                <MetricCompare
+                                                    label={t("metrics.accuracy")}
+                                                    before={evalResult.metrics_before.accuracy}
+                                                    after={evalResult.metrics_after.accuracy}
+                                                />
+
+                                                <MetricCompare
+                                                    label={t("metrics.recall")}
+                                                    before={evalResult.metrics_before.recall}
+                                                    after={evalResult.metrics_after.recall}
+                                                />
+
+                                                <MetricCompare
+                                                    label={t("metrics.precision")}
+                                                    before={evalResult.metrics_before.precision}
+                                                    after={evalResult.metrics_after.precision}
+                                                />
+
+                                                <MetricCompare
+                                                    label={t("metrics.f1")}
+                                                    before={evalResult.metrics_before.f1_score}
+                                                    after={evalResult.metrics_after.f1_score}
+                                                />
                                             </div>
 
                                             {/* Cột phải: Confusion Matrix & ROC (Chiếm 2/3) */}
@@ -510,7 +615,7 @@ export default function FeatureSelectionTab({
                                                             className="w-full h-auto max-h-[350px] object-contain"
                                                         />
                                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/10 transition-opacity">
-                                                            <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">Click to expand</span>
+                                                            <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">{t("clickToExpand")}</span>
                                                         </div>
                                                     </div>
                                                 )}
@@ -529,7 +634,7 @@ export default function FeatureSelectionTab({
                                                             className="w-full h-auto max-h-[450px] object-contain"
                                                         />
                                                         <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/10 transition-opacity">
-                                                            <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">Click to expand</span>
+                                                            <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">{t("clickToExpand")}</span>
                                                         </div>
                                                     </div>
                                                 )}
@@ -540,12 +645,12 @@ export default function FeatureSelectionTab({
 
                                             {/* SHAP GLOBAL IMPORTANCE SECTION */}
                                             <div className="space-y-6">
-                                                <h3 className="font-bold text-gray-800 dark:text-gray-200">Global importance (SHAP)</h3>
+                                                <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("shap.title")}</h3>
 
                                                 {/* 2.1 SHAP Bar Chart */}
                                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                                     <div className="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col items-center">
-                                                        <span className="font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide text-sm">Before Feature Selection</span>
+                                                        <span className="font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide text-sm">{t("shap.before")}</span>
                                                         {evalResult.shap_chart_before_url && (
                                                             <div
                                                                 className="relative group cursor-pointer w-full rounded-lg overflow-hidden bg-white border border-gray-100 dark:border-gray-600 p-2"
@@ -559,14 +664,14 @@ export default function FeatureSelectionTab({
                                                                     className="w-full h-auto max-h-[300px] object-contain"
                                                                 />
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/10 transition-opacity rounded-lg">
-                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">Click to expand</span>
+                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">{t("clickToExpand")}</span>
                                                                 </div>
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4 flex flex-col items-center">
-                                                        <span className="font-semibold text-blue-700 dark:text-blue-300 mb-3 uppercase tracking-wide text-sm">After Feature Selection</span>
+                                                        <span className="font-semibold text-blue-700 dark:text-blue-300 mb-3 uppercase tracking-wide text-sm">{t("shap.after")}</span>
                                                         {evalResult.shap_chart_after_url && (
                                                             <div
                                                                 className="relative group cursor-pointer w-full rounded-lg overflow-hidden bg-white border border-blue-100 dark:border-blue-800 p-2"
@@ -580,7 +685,7 @@ export default function FeatureSelectionTab({
                                                                     className="w-full h-auto max-h-[300px] object-contain"
                                                                 />
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/10 transition-opacity rounded-lg">
-                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">Click to expand</span>
+                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">{t("clickToExpand")}</span>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -590,7 +695,7 @@ export default function FeatureSelectionTab({
                                                 {/* 2.2 SHAP Beeswarm Chart */}
                                                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
                                                     <div className="bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col items-center">
-                                                        <span className="font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide text-sm">Before Feature Selection</span>
+                                                        <span className="font-semibold text-gray-700 dark:text-gray-300 mb-3 uppercase tracking-wide text-sm">{t("shap.before")}</span>
                                                         {evalResult.shap_beeswarm_before_url && (
                                                             <div
                                                                 className="relative group cursor-pointer w-full rounded-lg overflow-hidden bg-white border border-gray-100 dark:border-gray-600 p-2"
@@ -604,14 +709,14 @@ export default function FeatureSelectionTab({
                                                                     className="w-full h-auto max-h-[300px] object-contain"
                                                                 />
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/10 transition-opacity rounded-lg">
-                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">Click to expand</span>
+                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">{t("clickToExpand")}</span>
                                                                 </div>
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     <div className="bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4 flex flex-col items-center">
-                                                        <span className="font-semibold text-blue-700 dark:text-blue-300 mb-3 uppercase tracking-wide text-sm">After Feature Selection</span>
+                                                        <span className="font-semibold text-blue-700 dark:text-blue-300 mb-3 uppercase tracking-wide text-sm">{t("shap.after")}</span>
                                                         {evalResult.shap_beeswarm_after_url && (
                                                             <div
                                                                 className="relative group cursor-pointer w-full rounded-lg overflow-hidden bg-white border border-blue-100 dark:border-blue-800 p-2"
@@ -625,7 +730,7 @@ export default function FeatureSelectionTab({
                                                                     className="w-full h-auto max-h-[300px] object-contain"
                                                                 />
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/10 transition-opacity rounded-lg">
-                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">Click to expand</span>
+                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">{t("clickToExpand")}</span>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -637,16 +742,16 @@ export default function FeatureSelectionTab({
                                             <div className="space-y-4 pt-4 border-t border-gray-200 dark:border-gray-700">
                                                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                                                     <div>
-                                                        <h3 className="font-bold text-gray-800 dark:text-gray-200">Local explanations (LIME)</h3>
+                                                        <h3 className="font-bold text-gray-800 dark:text-gray-200">{t("lime.title")}</h3>
                                                         <p className="text-sm text-gray-500 dark:text-gray-400 mt-1 max-w-2xl">
-                                                            The <strong>XAI Score (R²)</strong> indicates the reliability of the explanation for the chosen row. A score closer to 1.0 means the explanation is highly trustworthy.
+                                                            {t("lime.desc")}
                                                         </p>
                                                     </div>
 
                                                     {/* LIME Data Input Row */}
                                                     <div className="flex items-center gap-3 bg-gray-50 dark:bg-gray-900/50 p-2.5 rounded-xl border border-gray-200 dark:border-gray-700">
                                                         <label className="text-sm font-semibold text-gray-700 dark:text-gray-300 whitespace-nowrap">
-                                                            Row index:
+                                                            {t("lime.rowIndex")}
                                                         </label>
                                                         <input
                                                             type="number"
@@ -663,7 +768,7 @@ export default function FeatureSelectionTab({
                                                             {isLimeLoading ? (
                                                                 <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
                                                             ) : (
-                                                                "Generate"
+                                                                t("lime.generate")
                                                             )}
                                                         </button>
                                                     </div>
@@ -674,17 +779,17 @@ export default function FeatureSelectionTab({
                                                     {isLimeLoading && (
                                                         <div className="absolute inset-0 z-10 bg-white/60 dark:bg-gray-900/60 backdrop-blur-sm flex flex-row items-center justify-center gap-3 rounded-xl border border-gray-200 dark:border-gray-700">
                                                             <div className="w-6 h-6 border-2 border-[#4361EE] border-t-transparent rounded-full animate-spin"></div>
-                                                            <p className="font-semibold text-gray-700 dark:text-gray-300">Generating LIME for row {limeRowIndex}...</p>
+                                                            <p className="font-semibold text-gray-700 dark:text-gray-300">{t("lime.generating", { row: limeRowIndex })}</p>
                                                         </div>
                                                     )}
 
                                                     <div className={`bg-gray-50 dark:bg-gray-900/20 border border-gray-200 dark:border-gray-700 rounded-xl p-4 flex flex-col items-center transition-opacity duration-300 ${isLimeLoading ? "opacity-30" : "opacity-100"}`}>
-                                                        <span className="font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide text-sm">Before Feature Selection</span>
+                                                        <span className="font-semibold text-gray-700 dark:text-gray-300 mb-2 uppercase tracking-wide text-sm">{t("lime.before")}</span>
 
                                                         {/* XAI Score Before */}
                                                         {evalResult.xai_score_before !== undefined && evalResult.xai_score_before !== null && (
                                                             <span className="mb-3 px-3 py-1 text-xs font-bold bg-white dark:bg-gray-800 text-[#4361EE] border border-gray-200 dark:border-gray-700 rounded-md shadow-sm">
-                                                                XAI Score (R²): {evalResult.xai_score_before.toFixed(4)}
+                                                                {t("lime.xaiScore", { score: evalResult.xai_score_before.toFixed(4) })}
                                                             </span>
                                                         )}
 
@@ -701,19 +806,19 @@ export default function FeatureSelectionTab({
                                                                     className="w-full h-auto max-h-[300px] object-contain"
                                                                 />
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/10 transition-opacity rounded-lg">
-                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">Click to expand</span>
+                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">{t("clickToExpand")}</span>
                                                                 </div>
                                                             </div>
                                                         )}
                                                     </div>
 
                                                     <div className={`bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 rounded-xl p-4 flex flex-col items-center transition-opacity duration-300 ${isLimeLoading ? "opacity-30" : "opacity-100"}`}>
-                                                        <span className="font-semibold text-blue-700 dark:text-blue-300 mb-2 uppercase tracking-wide text-sm">After Feature Selection</span>
+                                                        <span className="font-semibold text-blue-700 dark:text-blue-300 mb-2 uppercase tracking-wide text-sm">{t("lime.after")}</span>
 
                                                         {/* XAI Score After */}
                                                         {evalResult.xai_score_after !== undefined && evalResult.xai_score_after !== null && (
                                                             <span className="mb-3 px-3 py-1 text-xs font-bold bg-white dark:bg-gray-800 text-[#4361EE] border border-blue-200 dark:border-blue-800/30 rounded-md shadow-sm">
-                                                                XAI Score (R²): {evalResult.xai_score_after.toFixed(4)}
+                                                                {t("lime.xaiScore", { score: evalResult.xai_score_after.toFixed(4) })}
                                                             </span>
                                                         )}
 
@@ -730,7 +835,7 @@ export default function FeatureSelectionTab({
                                                                     className="w-full h-auto max-h-[300px] object-contain"
                                                                 />
                                                                 <div className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 bg-black/10 transition-opacity rounded-lg">
-                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">Click to expand</span>
+                                                                    <span className="bg-black/70 text-white text-xs px-3 py-1.5 rounded-md font-medium shadow-sm backdrop-blur-sm">{t("clickToExpand")}</span>
                                                                 </div>
                                                             </div>
                                                         )}
@@ -741,7 +846,7 @@ export default function FeatureSelectionTab({
                                         </div>
                                     </div>
                                 ) : (
-                                    <div className="text-center text-gray-500 py-8">Evaluation data is not available.</div>
+                                    <div className="text-center text-gray-500 py-8">{t("evaluation.noData")}</div>
                                 )}
                             </div>
                         </div>
@@ -751,32 +856,46 @@ export default function FeatureSelectionTab({
                             <div className="py-4 px-6 border-b border-gray-100 dark:border-gray-700 bg-gray-50 dark:bg-gray-900/50 flex items-center gap-2">
                                 <IoSettingsSharp className="text-[#4361EE] text-xl" />
                                 <h3 className="font-bold text-gray-900 dark:text-white">
-                                    Algorithm parameters
+                                    {t("params.title")}
                                 </h3>
                             </div>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-6 p-6">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
 
                                 {/* Data Balancing Method Dropdown */}
                                 <div>
-                                    <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                        Data balancing
+                                    <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                                        {t("params.balancingLabel")}
                                     </label>
-                                    <select
+                                    <CustomSelect
+                                        id="data-balancing"
                                         value={localBalancing}
-                                        onChange={(e) => setLocalBalancing(e.target.value)}
-                                        className={inputClass}
-                                    >
-                                        <option value="none">None</option>
-                                        <option value="adasyn">ADASYN</option>
-                                        <option value="smote">SMOTE</option>
-                                    </select>
-                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Choose method to handle imbalanced classes.</p>
+                                        onChange={setLocalBalancing}
+                                        options={[
+                                            { value: "none", label: t("params.balancingOptions.none") },
+                                            { value: "adasyn", label: "ADASYN" },
+                                            { value: "smote", label: "SMOTE" },
+                                        ]}
+                                    />
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("params.balancingDesc")}</p>
+                                </div>
+
+                                <div>
+                                    <label htmlFor="evaluation-model" className="block text-sm font-semibold text-gray-800 dark:text-gray-200 mb-2">
+                                        {t("params.modelLabel")}
+                                    </label>
+                                    <CustomSelect
+                                        id="evaluation-model"
+                                        value={localModel}
+                                        onChange={setLocalModel}
+                                        options={getFeatureSelectionModelOptions(isLocal)}
+                                    />
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("params.modelDesc")}</p>
                                 </div>
 
                                 {/* Population Size */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                        Population size
+                                        {t("params.sizeLabel")}
                                     </label>
                                     <input
                                         type="number"
@@ -785,13 +904,13 @@ export default function FeatureSelectionTab({
                                         onChange={(e) => setLocalSize(Number(e.target.value))}
                                         className={inputClass}
                                     />
-                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Individuals in each generation (10 - 200).</p>
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("params.sizeDesc")}</p>
                                 </div>
 
                                 {/* Mutation Rate */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                        Mutation rate
+                                        {t("params.mutationLabel")}
                                     </label>
                                     <input
                                         type="number"
@@ -801,28 +920,28 @@ export default function FeatureSelectionTab({
                                         onChange={(e) => setLocalMutationRate(Number(e.target.value))}
                                         className={inputClass}
                                     />
-                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Probability of feature flipping (0.01 - 0.5).</p>
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("params.mutationDesc")}</p>
                                 </div>
 
                                 {/* Number of Parents */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                        Number of parents
+                                        {t("params.nParentsLabel")}
                                     </label>
                                     <input
                                         type="number"
                                         value={localNParents}
                                         onChange={(e) => setLocalNParents(e.target.value ? Number(e.target.value) : "")}
-                                        placeholder="Default"
+                                        placeholder={t("params.nParentsPlaceholder")}
                                         className={inputClass}
                                     />
-                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Best individuals kept. (Less than Population).</p>
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("params.nParentsDesc")}</p>
                                 </div>
 
                                 {/* Test Size */}
                                 <div>
                                     <label className="block text-sm font-semibold text-gray-800 dark:text-gray-200">
-                                        Test size
+                                        {t("params.testSizeLabel")}
                                     </label>
                                     <input
                                         type="number"
@@ -832,7 +951,7 @@ export default function FeatureSelectionTab({
                                         onChange={(e) => setLocalTestSize(Number(e.target.value))}
                                         className={inputClass}
                                     />
-                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">Proportion of data for evaluation (0.1 - 0.5).</p>
+                                    <p className="mt-2 text-xs text-gray-500 dark:text-gray-400">{t("params.testSizeDesc")}</p>
                                 </div>
                             </div>
 
@@ -843,7 +962,7 @@ export default function FeatureSelectionTab({
                                     className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#4361EE] text-white font-semibold shadow-md cursor-pointer hover:bg-[#3a52d5] hover:shadow-lg focus:ring-4 focus:ring-indigo-500/30 transition-all disabled:opacity-70 disabled:cursor-not-allowed"
                                 >
                                     <FiPlay className="text-sm" />
-                                    Rerun selection
+                                    {t("params.rerunBtn")}
                                 </button>
                             </div>
                         </div>

@@ -1,21 +1,22 @@
 import re
 import uuid
-from typing import List, Dict, Any
+from typing import List, Dict
 import pandas as pd
 import numpy as np
 from datetime import datetime
 from fastapi import HTTPException, status
 from pydantic import ValidationError
-from sqlalchemy import delete, insert, select, literal, union_all
-from models.user_model import User
+from sqlalchemy import insert
+from sqlalchemy.orm import Session
+
 from models.prediction_model import Prediction
 from models.batch_prediction_model import BatchPrediction
 from schemas.patient_schema import PatientPredict
-from sqlalchemy.orm import Session
 from core.model_loader import get_pipeline
-from services.xai_service import generate_patient_xai_images, generate_batch_xai_images
-from services.dataset_service import load_dataset
 from core.supabase_client import supabase
+
+from services.xai_service import generate_patient_xai_images, generate_batch_xai_images
+from services.dataset_service import load_dataset, DATASET_BUCKET
 
 RENAME_MAP = {
     "age": "Age",
@@ -44,7 +45,14 @@ COLUMN_ALIASES = {
     "st_slope": ["st_slope", "st slope", "stslope", "st segment slope"],
 }
 REQUIRED_COLUMNS = list(RENAME_MAP.keys())
-DATASET_BUCKET = "heart-failure-datasets"
+
+
+def check_uuid(id: str):
+    try:
+        validated_uuid = str(uuid.UUID(id))
+    except ValueError:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid UUID format")
+    return validated_uuid
 
 
 def normalize_col(col: str) -> str:
@@ -216,17 +224,11 @@ def predict_batch(patients: List[PatientPredict]):
     }
 
 
-def predict_dataframe(db: Session, dataset_id: str, user_id: str, target_column: str):
+def predict_dataframe(db: Session, dataset_id: str, user_id: str):
     try:
         df = load_dataset(dataset_id, user_id)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Unable to load dataset: {str(e)}")
-
-    if target_column and target_column not in df.columns:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Target column '{target_column}' not found. Available columns: {list(df.columns)}",
-        )
 
     # Keep a copy of the original dataframe to preserve user's extra columns
     original_df = df.copy()
@@ -272,9 +274,9 @@ def predict_dataframe(db: Session, dataset_id: str, user_id: str, target_column:
     predictions_list = [item["prediction"] for item in batch_result["predictions"]]
     probabilities_list = [item["probability"] for item in batch_result["predictions"]]
 
-    # Append to the original dataframe
-    result_col_name = target_column if target_column else "prediction_result"
-    prob_col_name = f"{result_col_name}_prediction_probability" if target_column else "prediction_probability"
+    # Ghi kết quả dự đoán vào 2 cột mới trong file kết quả
+    result_col_name = "prediction_result"
+    prob_col_name = "prediction_probability"
 
     original_df[result_col_name] = predictions_list
     original_df[prob_col_name] = probabilities_list
@@ -303,7 +305,6 @@ def predict_dataframe(db: Session, dataset_id: str, user_id: str, target_column:
             user_id=check_uuid(user_id),
             source_dataset_id=dataset_id,
             result_dataset_id=pred_dataset_id,
-            target_column=target_column,
             summary=batch_result["summary"],
             batch_xai=batch_xai_data,
         )
@@ -317,211 +318,6 @@ def predict_dataframe(db: Session, dataset_id: str, user_id: str, target_column:
     batch_result.pop("predictions", None)
 
     batch_result["file_id"] = pred_dataset_id
-    batch_result["target_column"] = target_column
     batch_result["batch_prediction_id"] = new_row.id
     batch_result["created_at"] = new_row.created_at
     return batch_result
-
-
-def check_uuid(id: str):
-    try:
-        validated_uuid = str(uuid.UUID(id))
-    except ValueError:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid UUID format")
-    return validated_uuid
-
-
-def get_unified_prediction_history(db: Session, user_id: str, limit: int, offset: int):
-    user_uuid = check_uuid(user_id)
-
-    # Query từ bảng Single Prediction
-    stmt_single = select(Prediction.id, literal("single").label("type"), Prediction.created_at).where(
-        Prediction.user_id == user_uuid
-    )
-
-    # Query từ bảng Batch Prediction
-    stmt_batch = select(BatchPrediction.id, literal("batch").label("type"), BatchPrediction.created_at).where(
-        BatchPrediction.user_id == user_uuid
-    )
-
-    # Gộp 2 query lại bằng UNION ALL
-    union_stmt = union_all(stmt_single, stmt_batch).subquery()
-
-    # Truy vấn trên bảng ảo vừa gộp, sắp xếp và phân trang
-    final_stmt = (
-        select(union_stmt.c.id, union_stmt.c.type, union_stmt.c.created_at)
-        .order_by(union_stmt.c.created_at.desc())
-        .offset(offset)
-        .limit(limit)
-    )
-
-    results = db.execute(final_stmt).mappings().all()
-    return results
-
-
-def get_predictions_by_user(db: Session, user_id: str, limit: int, offset: int):
-    user_uuid = check_uuid(user_id)
-    result = (
-        db.execute(
-            select(Prediction)
-            .where(Prediction.user_id == user_uuid)
-            .order_by(Prediction.created_at.desc())
-            .offset(offset)
-            .limit(limit)
-        )
-        .scalars()
-        .all()
-    )
-    if not result:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found")
-    return result
-
-
-def get_prediction_by_id(db: Session, prediction_id: str, user: dict):
-    prediction_uuid = check_uuid(prediction_id)
-
-    if user["role"] == "admin":
-        result = db.execute(select(Prediction).where(Prediction.id == prediction_uuid)).scalar_one_or_none()
-    else:
-        result = db.execute(
-            select(Prediction).where(Prediction.id == prediction_uuid).where(Prediction.user_id == user["user_id"])
-        ).scalar_one_or_none()
-
-    if not result:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found")
-    return result
-
-
-def get_batch_predictions_by_user(db: Session, user_id: str, limit: int, offset: int):
-    user_uuid = check_uuid(user_id)
-    result = (
-        db.execute(
-            select(BatchPrediction)
-            .where(BatchPrediction.user_id == user_uuid)
-            .order_by(BatchPrediction.created_at.desc())
-            .offset(offset)
-            .limit(limit)
-        )
-        .scalars()
-        .all()
-    )
-    if not result:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Batch predictions not found")
-    return result
-
-
-def get_batch_prediction_by_id(db: Session, batch_id: str, user: dict):
-    batch_uuid = check_uuid(batch_id)
-
-    if user["role"] == "admin":
-        result = db.execute(select(BatchPrediction).where(BatchPrediction.id == batch_uuid)).scalar_one_or_none()
-    else:
-        result = db.execute(
-            select(BatchPrediction)
-            .where(BatchPrediction.id == batch_uuid)
-            .where(BatchPrediction.user_id == check_uuid(user["user_id"]))
-        ).scalar_one_or_none()
-
-    if not result:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Batch prediction not found")
-    return result
-
-
-def generate_single_xai(patient_raw: Dict[str, Any]):
-    pipeline = get_pipeline()
-    model = pipeline["model"]
-    features = pipeline["features"]
-    background_data = pipeline["shap_background"]
-    lime_data = pipeline["lime_training_data"]
-
-    # Chuyển raw data thành DataFrame để tận dụng hàm build_column_mapping
-    raw_df = pd.DataFrame([patient_raw])
-
-    # Map tên cột (hàm này có sẵn trong file của bạn, dùng biến COLUMN_ALIASES)
-    try:
-        column_mapping = build_column_mapping(raw_df.columns.tolist())
-    except HTTPException as e:
-        raise e
-
-    mapped_df = raw_df.rename(columns=column_mapping)
-
-    # Lọc lấy đúng các cột cần thiết (REQUIRED_COLUMNS)
-    mapped_df = mapped_df[REQUIRED_COLUMNS].copy()
-    mapped_df = mapped_df.where(pd.notnull(mapped_df), None)
-
-    # Chuyển lại thành dict để đưa cho Pydantic
-    mapped_record = mapped_df.to_dict(orient="records")[0]
-
-    # Validate bằng PatientPredict
-    try:
-        mapped_record["save_prediction"] = False
-        patient_valid = PatientPredict(**mapped_record)
-    except ValidationError as e:
-        error_details = [f"{err.get('loc')[0]}: {err.get('msg')}" for err in e.errors()]
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_CONTENT,
-            detail={"message": "Invalid patient data format", "errors": error_details},
-        )
-
-    # Bỏ các trường không nằm trong mô hình dự đoán
-    clean_dict = patient_valid.model_dump()
-    clean_dict.pop("save_prediction", None)
-
-    clean_df = pd.DataFrame([clean_dict])
-    x_processed = prepare_dataframe(clean_df, pipeline)
-
-    plots = generate_patient_xai_images(
-        model=model,
-        background_data=background_data,
-        lime_train_data=lime_data,
-        features_list=features,
-        processed_df=x_processed,
-        raw_row=clean_df[features],
-    )
-    return plots
-
-
-def delete_prediction_by_id(db: Session, prediction_id: str, user: dict):
-    prediction_uuid = check_uuid(prediction_id)
-
-    stmt = delete(Prediction).where(Prediction.id == prediction_uuid)
-
-    if user["role"] != "admin":
-        stmt = stmt.where(Prediction.user_id == user["user_id"])
-
-    result = db.execute(stmt)
-    db.commit()
-
-    if result.rowcount <= 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Prediction not found")
-
-    return {"detail": "Delete user prediction successfully"}
-
-
-def delete_predictions_by_user(db: Session, user_id: str):
-    user_uuid = check_uuid(user_id)
-
-    user = db.execute(select(User.id).where(User.id == user_uuid)).scalar_one_or_none()
-    if not user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
-    db.execute(delete(Prediction).where(Prediction.user_id == user_uuid))
-    db.commit()
-    return {"detail": "User predictions deleted successfully"}
-
-
-def delete_batch_prediction_by_id(db: Session, batch_id: str, user: dict):
-    batch_uuid = check_uuid(batch_id)
-
-    stmt = delete(BatchPrediction).where(BatchPrediction.id == batch_uuid)
-
-    if user["role"] != "admin":
-        stmt = stmt.where(BatchPrediction.user_id == user["user_id"])
-
-    result = db.execute(stmt)
-    db.commit()
-
-    if result.rowcount <= 0:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Batch prediction not found")
-
-    return {"detail": "Delete batch prediction successfully"}

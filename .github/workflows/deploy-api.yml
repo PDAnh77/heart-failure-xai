@@ -6,6 +6,7 @@ on:
       - "**"
     paths:
       - "api/**"
+  workflow_dispatch:
 
 env:
   IMAGE_NAME: heart-failure-api
@@ -20,10 +21,10 @@ permissions:
 jobs:
   build_image:
     name: Build Docker Image
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     steps:
       - name: Checkout repository
-        uses: actions/checkout@v4
+        uses: actions/checkout@v5
 
       - name: Build Docker image
         run: docker build -t $DOCKER_USERNAME/$IMAGE_NAME:$IMAGE_TAG ./api
@@ -40,7 +41,7 @@ jobs:
   
   scan_image:
     name: Trivy Security Scan
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: build_image
     steps:
       - name: Download image artifact
@@ -52,24 +53,24 @@ jobs:
         run: gunzip -c image.tar.gz | docker load
 
       - name: Trivy Scan (Security Gate)
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           format: table
-          severity: CRITICAL,HIGH
-          version: v0.71.2
+          severity: CRITICAL
+          version: v0.73.0
           exit-code: 1
           ignore-unfixed: true
           vuln-type: os,library
 
       - name: Trivy Scan (SARIF Report)
-        uses: aquasecurity/trivy-action@0.35.0
+        uses: aquasecurity/trivy-action@v0.36.0
         with:
           image-ref: ${{ env.DOCKER_USERNAME }}/${{ env.IMAGE_NAME }}:${{ env.IMAGE_TAG }}
           format: sarif
           output: trivy-results.sarif
-          severity: CRITICAL,HIGH
-          version: v0.71.2
+          severity: CRITICAL
+          version: v0.73.0
           ignore-unfixed: true
           vuln-type: os,library
 
@@ -80,7 +81,7 @@ jobs:
 
   push_image:
     name: Push Image & Deploy API
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     needs: scan_image
     if: github.ref == 'refs/heads/main'
     steps:

@@ -10,7 +10,6 @@ class BatchPrediction(Base):
     user_id = Column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=True)
     source_dataset_id = Column(String, nullable=True)
     result_dataset_id = Column(String, nullable=False)
-    target_column = Column(String, nullable=True)
     summary = Column(JSONB, nullable=False)
     batch_xai = Column(JSONB, nullable=False)
     created_at = Column(DateTime(timezone=True), server_default=func.now())

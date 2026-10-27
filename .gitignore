@@ -1,7 +1,7 @@
 /venv
 /api/**/__pycache__/
 **/.env
-/models/
 /notebooks/result_images/
 .vscode
 input/testing_dataset
+/api/storage/
